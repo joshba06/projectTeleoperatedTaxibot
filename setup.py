@@ -15,6 +15,15 @@ def createFolderStructure(labels, home_path, system_id):
         '1_Preprocessing': os.path.join(home_path,'1_Preprocessing'),
         'images': os.path.join(home_path,'1_Preprocessing/images'),
 
+        '1_Calibration': os.path.join(home_path,'1_Calibration'),
+        'stereo': os.path.join(home_path,'1_Calibration/stereo'),
+        'individual': os.path.join(home_path,'1_Calibration/individual'),
+        'stCamL': os.path.join(home_path,'1_Calibration/stereo/camL'),
+        'stCamR': os.path.join(home_path,'1_Calibration/stereo/camR'),
+        'indCamR': os.path.join(home_path,'1_Calibration/individual/camR'),
+        'indCamL': os.path.join(home_path,'1_Calibration/individual/camL'),
+
+
         '2_Tensorflow': os.path.join(home_path,'2_Tensorflow'),
         'protoc': os.path.join(home_path,'2_Tensorflow/protoc'),
         'workspace': os.path.join(home_path,'2_Tensorflow/workspace'),
@@ -60,7 +69,8 @@ def createFolderStructure(labels, home_path, system_id):
             
         # If path does exist, do not replace old path
         else:        
-            print('%s already exists..' %paths[key])
+            nothing = 0
+            #print('%s already exists..' %paths[key])
 
     
     ## Create subfolders for labels
@@ -81,5 +91,7 @@ def createFolderStructure(labels, home_path, system_id):
     # Add paths for which directories shall not be created, but ones that are frequently used
     paths['home'] = home_path
     paths['research'] = paths['2_Tensorflow']+'/models/research'
+
+    print('Setup completed...')
 
     return files, paths
