@@ -51,6 +51,7 @@ def createFolderStructure(labels, home_path, system_id):
         path = paths['2_Tensorflow']
         if (os.path.exists(path)):
             shutil.rmtree(path)
+            print('Directory "2_Tensorflow" was deleted')
     else:
         print('No operating system was defined...')
 
