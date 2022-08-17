@@ -1,67 +1,110 @@
-#%% User settings________________________________________________________________________________________________________
+## User settings___________________________________________________________________
 home_path = '/Users/niklas/Virtual_Environment/Version_5/projectAutonomous'
-# path_models = '/Users/niklas/Virtual_Environment/Version_5/projectAutonomous/2_Tensorflow/workspace/training/models'
 custom_model_name = 'my_ssd_mobilenet_v2_fpnlite'
 
-labels = ['Car', 'Mug']
+labels = ['Engine']
 
-## Downscale camera resolution if needed
-def setCap720(cap):
-    cap.set(3, 1280)
-    cap.set(4, 720)
+capL = cv.VideoCapture(0)
+capR = cv.VideoCapture(2)
 
+debuggingMode = True
 
-# 0. Install packages manually in virtual environment using jupter notebook
-# - This will create folder structure as well
-#________________________________________________________________________________________________________________________
+stereoGenImages = False
+singleLGenImages = False
+singleRGenImages = False
 
-#%% Import dependencies
+stereoTestCombinations = False
+singleLTestCombinations = False
+singleRTestCombinations = False
+
+singleLCalibration = True
+singleRCalibration = False
+stereoCalibration = False
+
+newRectificationMapping = False
+
+showAllSteps = False
+showCams = False
+
+## Installation ___________________________________________________________________
+
+# Import fundamental dependencies
+#pip install GitPython
 import os
+import sys
+import time
+import pathlib
+import shutil
+import math
+import uuid
+from pprint import pprint
+
+
+# Setup folder structure and install extented packages
+import setup
+files, paths = setup.installPackages(home_path, labels, firstInstallation=True)
+
+import cameraCalibration as camcal
+
+# Import newly installed dependencies
 import cv2 as cv
 import numpy as np
 import tensorflow as tf
-import sys
-
-# Setup custom dependencies
-import setup
-files, paths = setup.createFolderStructure(labels, home_path, 0)
-
-import depthDetectionasModules as cameraSetup
-
 os.chdir(paths['research'])
 import object_detection
 from object_detection.utils import label_map_util
 from object_detection.utils import visualization_utils as viz_utils
 from object_detection.builders import model_builder
 from object_detection.utils import config_util
+os.chdir(paths['home'])
 
-# Open the file in path: /Users/niklas/Virtual_Environment/Version_5/joshBakNew/lib/python3.9/site-packages/object_detection/utils/visualization_utils.py
-# Change the content to that of file modified_detection_sourcecode.py
+import cameraCalibrationNew as cameraSetup
+
+## 0. Check if cameras are displayed correctly_______________________________________
+if debuggingMode is True:
+
+    while True:
+        key = cv.waitKey(25)
+
+        if key == 27:
+            print('Program was terminated by user..')
+            sys.exit()
+        elif key == ' ':
+            print('User confirmed correct arrangement of cameras...')
+
+        # Display livestream of camera
+        isTrueL, frameL = capL.read()
+        isTrueR, frameR = capR.read()
+        cv.imshow('Camera L', frameL)
+        cv.imshow('Camera R', frameR)
+    cv.destroyAllWindows()
+
+## 1. Calibration and rectification
+print('__________ 1. Calibration and rectification __________')
+print('.')
+print('.')
+
+cameraSetup.getIntrinsicsLeftCamera(capL, paths, singleLGenImages, singleLTestCombinations, singleLCalibration, debuggingMode)
+cameraSetup.getIntrinsicsRightCamera(capR, paths, singleRGenImages, singleRTestCombinations, singleRCalibration, debuggingMode)
+cameraSetup.calibrateStereoSetup(capL, capR, paths, stereoGenImages, stereoTestCombinations, stereoCalibration, debuggingMode)
+leftMapX, leftMapY, rightMapX, rightMapY, Q = cameraSetup.getRectificationMap(capL, capR, paths, newRectificationMapping, debuggingMode)
 
 
-#%% 0. Check if cameras are displayed correctly
-capL = cv.VideoCapture(2)
-capR = cv.VideoCapture(0)
+print('.')
+print('.')
+print('__________ 1. Calibration and rectification completed __________')
+print('.')
 
-# while True:
-#         key = cv.waitKey(25)
+## 2. Correspondence (disparity map)
 
-#         if key == 27:
-#             print('Program was terminated by user..')
-#             sys.exit()
-#         elif key == ord('q'):
-#             break
+print('.')
+print('__________ Starting correspondence calculation __________')
 
-#         # Display livestream of camera
-#         isTrueL, frameL = capL.read()
-#         isTrueR, frameR = capR.read()
-#         cv.imshow('Camera L', frameL)
-#         cv.imshow('Camera R', frameR)
-
-# cv.destroyAllWindows()
+disparityMap, pointCloud = cameraSetup.initiateDepthDetection(Left_rectified, Right_rectified, Q, paths, debuggingMode)
 
 
-#%% 1. Load object detection model
+
+## 2. Load object detection model
 
 # Determine latest checkpoint
 path_checkpoints = paths['3_Output']+'/'+custom_model_name
