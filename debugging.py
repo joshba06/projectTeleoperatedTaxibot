@@ -8,16 +8,27 @@ import depthDetectionasModules as cameraSetup
 from pprint import pprint
 
 home_path = '/Users/niklas/Virtual_Environment/Version_5/projectAutonomous'
-paths = {
-        '1_Calibration': os.path.join(home_path,'1_Calibration'),
-        'stereo': os.path.join(home_path,'1_Calibration/stereo'),
-        'individual': os.path.join(home_path,'1_Calibration/individual'),
-        'stCamL': os.path.join(home_path,'1_Calibration/stereo/camL'),
-        'stCamR': os.path.join(home_path,'1_Calibration/stereo/camR'),
-        'indCamR': os.path.join(home_path,'1_Calibration/individual/camR'),
-        'indCamL': os.path.join(home_path,'1_Calibration/individual/camL'),
-    
-    }
+custom_model_name = 'my_ssd_mobilenet_v2_fpnlite'
+
+labels = ['Engine']
+
+## Installation________________________________________________________________________________________________________
+
+# Import fundamental dependencies
+#pip install GitPython
+import os
+import sys
+import time
+import pathlib
+import shutil
+import math
+import uuid
+
+# Setup folder structure
+import setup
+files, paths = setup.installPackages(home_path, labels, firstInstallation=True)
+sys.exit()
+
 
 squareSize = 2.2 #cm
 
@@ -112,8 +123,8 @@ while True and (takeTestPhoto is True) :
     cv.imshow('Cam L ', temp)
 
     if key == ord(' '):
-        imgPathL = path_depth_testing+'/camL99.png'
-        imgPathR = path_depth_testing+'/camR99.png'
+        imgPathL = path_depth_testing+'/camL100.png'
+        imgPathR = path_depth_testing+'/camR100.png'
 
         cv.imwrite(imgPathL,frameL)
         cv.imwrite(imgPathR,frameR)
@@ -196,13 +207,7 @@ if retR is True and retL is True:
 else:
     print('No chessboard found!')
 
-# steps = 20
-#     step_height = Left_rectified.shape[1] / steps
-#     y = 0
-#     for j in range(steps):
-#         y += step_height
-#         y = int(y)
-#         cv.line(vis, (0,y), (vis.shape[1],y), (255,0,0), 2)
+
 # cv.imshow('Rectification check - before rectification', vis_beforeRectification)
 cv.imshow('Rectification check - after rectification', vis_afterRectification)
     
@@ -212,7 +217,7 @@ minDisparity = 144
 maxDisparity = 272*2
 numDisparities = maxDisparity-minDisparity
 blockSize = 3
-disp12MaxDiff = 1
+disp12MaxDiff = 5
 uniquenessRatio = 15
 
 left_matcher = cv.StereoSGBM_create(minDisparity = minDisparity,
@@ -302,10 +307,14 @@ colored = cv.applyColorMap(disp8, cv.COLORMAP_JET)
 # output_points = points_3D_LM[mask_map]
 # output_colors = colors[mask_map]
 
-
-
-
 left_disp_forVis = left_matcher.compute(Left_rectified, Right_rectified)
+
+# Proof that coordinates in left rectified and leftdisp are the same
+# for n in range(len(imagePointsL[0])):
+#     x=int(round(imagePointsL[0][n][0][0]))
+#     y=int(round(imagePointsL[0][n][0][1]))
+#     cv.circle(left_disp_forVis, (x,y), 5, (0,0,0), -1)
+
 
 while True:
 
@@ -316,8 +325,8 @@ while True:
         break
 
     cv.imshow(win_left_disp, left_disp_forVis)
-    cv.imshow(win_filtered_disp, filtered_disp_forVis)
-    cv.imshow('Coloured Disparity', colored)
+    #cv.imshow(win_filtered_disp, filtered_disp_forVis)
+    #cv.imshow('Coloured Disparity', colored)
 
 
 cv.destroyAllWindows()
