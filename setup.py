@@ -42,7 +42,7 @@ def moveAllContent(source, destination):
         shutil.move(source+'/'+item, destination)
 
 def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+    subprocess.run([sys.executable, "-m", "pip", "install", package])
 
 def uninstall(package):
     subprocess.check_call([sys.executable, "-m", "pip", "uninstall", package, "-y"])
@@ -64,6 +64,7 @@ def createFolderStructure(labels, home_path):
         
         '1_CameraCalibration': os.path.join(home_path,'1_Calibration'),
         'stereo': os.path.join(home_path,'1_Calibration/stereo'),
+        'stereoTesting': os.path.join(home_path,'1_Calibration/stereo/testing'),
         'individual': os.path.join(home_path,'1_Calibration/individual'),
         'stCamL': os.path.join(home_path,'1_Calibration/stereo/camL'),
         'stCamR': os.path.join(home_path,'1_Calibration/stereo/camR'),
@@ -150,7 +151,6 @@ def installOpenCV():
     installed_packages = pkg_resources.working_set
     installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
 
-    from pprint import pprint
     #pprint(installed_packages_list)
 
 
@@ -175,7 +175,14 @@ def installOpenCV():
             uninstall(package_name)
             print('Package: "{}" version: {}. Installing...'.format('opencv-contrib-python','4.6.0.66'))
             install('opencv-contrib-python==4.6.0.66')
+        
+        else:
+            break
+        
+    install('opencv-contrib-python==4.6.0.66')
 
+def installAlbumentation():
+    os.system('pip install -U albumentations --no-binary qudida,albumentations')
 
 def installModelGarden(paths):
     # Download the model garden (model garden is an environment that is necessary to train new models from scratch or to continue training existing models)
@@ -337,6 +344,7 @@ def installPackages(home_path, labels, firstInstallation):
 
         # Install packages required for object detection (not training)
         installBasicPackages()
+        installAlbumentation()
         installModelGarden(paths)
         installProtobuf(paths)
         installCocoAPI(paths)
@@ -346,7 +354,9 @@ def installPackages(home_path, labels, firstInstallation):
 
     elif firstInstallation is False:
         files, paths = createFolderStructure(labels, home_path)
-        checkODAPI(paths)
+        #checkODAPI(paths)
+        installOpenCV()
+        
 
 
     return files, paths
