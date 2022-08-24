@@ -2,7 +2,6 @@
 import os
 import shutil
 import platform
-from git import Repo
 from pprint import pprint
 
 import subprocess
@@ -60,6 +59,7 @@ def createFolderStructure(labels, home_path):
         'backgrounds': os.path.join(home_path,'0_UserInput/backgrounds'),
         'objects': os.path.join(home_path,'0_UserInput/objects'),
         'trainedModels': os.path.join(home_path,'0_UserInput/trainedModels'),
+        'scripts': os.path.join(home_path,'0_UserInput/scripts'),
 
         
         '1_CameraCalibration': os.path.join(home_path,'1_Calibration'),
@@ -79,8 +79,7 @@ def createFolderStructure(labels, home_path):
         '2_Tensorflow': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow'),
         'protoc': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/protoc'),
         'tf_models': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/models'),
-        'workspace': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/workspace'),
-        'scripts': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/workspace/scripts'),   
+        'workspace': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/workspace'), 
         'training': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/workspace/training'),
         'annotations': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/workspace/training/annotations'),
         'images_training': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/workspace/training/images/training'),
@@ -128,7 +127,13 @@ def createFolderStructure(labels, home_path):
     directories['research'] = directories['2_Tensorflow']+'/models/research'
 
         # Create dictionary with paths to most used files
-    files = {}
+    files = {
+                'labelmap': os.path.join(directories['annotations']+'/label_map.pbtxt'),
+                'tf_train': os.path.join(directories['annotations']+'/train.record'),
+                'tf_test': os.path.join(directories['annotations']+'/test.record'),
+                'generateTfRecord': os.path.join(directories['scripts']+'/generatetfrecord.py'),
+
+    }
 
     return files, directories
 
@@ -136,13 +141,15 @@ def createFolderStructure(labels, home_path):
 def installBasicPackages():
     # all other required packages will be installed and updated by TF2 object detection API
     install('wget==3.2')
-    print('Successfully installed wget...')
+    print('Successfully checked installation of wget...')
     install('pyqt5==5.15.7')
-    print('Successfully installed pyqt5...')
+    print('Successfully checked installation of pyqt5...')
     install('matplotlib==3.5.2')
-    print('Successfully installed matplotlib...')
+    print('Successfully checked installation of matplotlib...')
     install('pandas==1.4.3')
-    print('Successfully installed pandas...')
+    print('Successfully checked installation of pandas...')
+    install('GitPython')
+    print('Successfully checked installation of GitPython...')
     
 
 def installOpenCV():
@@ -185,6 +192,7 @@ def installAlbumentation():
     os.system('pip install -U albumentations --no-binary qudida,albumentations')
 
 def installModelGarden(paths):
+    from git import Repo
     # Download the model garden (model garden is an environment that is necessary to train new models from scratch or to continue training existing models)
     # The model itself will be downloaded later
 
@@ -243,6 +251,7 @@ def installProtobuf(paths):
 
 
 def installCocoAPI(paths):
+    from git import Repo
     
     # Clone repository only if it does not exist already
     if os.path.exists(paths['research']+'/cocoapi/README.txt') is False:
