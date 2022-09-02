@@ -143,6 +143,10 @@ def createFolderStructure(labels, home_path, colab=False):
 
 
 def installBasicPackages():
+
+    # Upgrade pip 
+    subprocess.run([sys.executable, "pip", "install", "--upgrade", "pip"])
+
     # all other required packages will be installed and updated by TF2 object detection API
     install('wget==3.2')
     print('Successfully checked installation of wget...')
