@@ -1002,69 +1002,62 @@ def calibrateStereo(lsBestCombinationtereo, paths, newCameraMatrixL, distortionC
 #%% Main functions
 
 def getIntrinsicsLeftCamera(capture, paths, singleLGenImages, singleLTestCombinations, singleLCalibration, debuggingMode):
-
-    print('.\n{:^75s}'.format('_____ Computing intrinsics for left camera _____\n.'))
-
-    # If any of the steps to calibration must be completed, enter loop until they finish
-    while (singleLGenImages is True) or (singleLTestCombinations is True) or (singleLCalibration is True):
     
-        if singleLGenImages is True: #Works
+    if singleLGenImages is True: #Works
+        generateImgsSingle(capture, 'L', paths['indCamL'])
 
-            generateImgsSingle(capture, 'L', paths['indCamL'])
-            singleLGenImages = False
+    elif singleLTestCombinations is True: #Works
+    
+        print('Computing best image combination for camera L')
+        # Create a dictionary with paths to all images and their respective image points 
+        dict_pathsPoints = loadImgsandImgPoints('Single', paths['indCamL'], None)
 
-        elif singleLTestCombinations is True: #Works
-        
-            print('Computing best image combination for camera L')
-            # Create a dictionary with paths to all images and their respective image points 
-            dict_pathsPoints = loadImgsandImgPoints('Single', paths['indCamL'], None)
+        # Find best combination for all images
+        lsBestCombination = testAllImgCombinations('Single', dict_pathsPoints, 'L', paths['individual'])
 
-            # Find best combination for all images
-            lsBestCombination = testAllImgCombinations('Single', dict_pathsPoints, 'L', paths['individual'])
-            
-            singleLTestCombinations = False
+    elif singleLCalibration == True: # Works
 
-        elif singleLCalibration == True: # Works
+        # Load list with best combination from file
+        try:
+            lsBestCombination = np.load(paths['individual']+'/best_combination_camL.npy')
+        except:
+            print('Failed to load best image combination. Please compute best combination first')
+        else:
+            # Compute intrinsics
+            cameraMatrixL, distortionCoefficientsL, newCameraMatrixL = calibrateSingle('L', lsBestCombination, paths['individual'], squareSize)
 
-            # Load list with best combination from file
-            try:
-                lsBestCombination = np.load(paths['individual']+'/best_combination_camL.npy')
+            #Save matrices to folder
+            os.chdir(paths['individual'])
+            np.save('distortionCoefficientsL', distortionCoefficientsL)
+            np.save('cameraMatrixL', cameraMatrixL)
+            np.save('newcameraMatrixL', newCameraMatrixL)
+            print('Camera L intrinsics: fx={fx:.2f}px, fy={fy:.2f}px, cx={cx:.2f}px, cy={cy:.2f}px'.format(fx=newCameraMatrixL[0][0], fy=newCameraMatrixL[1][1], cx=newCameraMatrixL[0][2], cy=newCameraMatrixL[1][2]))
+            print('Camera L distortion coefficients: k1={:.5f}, k2={:.5f}, p1={:.5f}, p2={:.5f}, k3={:.5f} '.format(distortionCoefficientsL[0][0], distortionCoefficientsL[1][0], distortionCoefficientsL[2][0], distortionCoefficientsL[3][0], distortionCoefficientsL[4][0]))
+            print('CameraMatrixL, distortionCoefficientsL and newCameraMatrixL computed and saved to file...')
+
+    else:
+            print('Attempting to load cam L intrinsics from file...')
+            try: 
+                cameraMatrixL = np.load(paths['individual']+'/cameraMatrixL.npy')
+                newCameraMatrixL = np.load(paths['individual']+'/newCameraMatrixL.npy')
+                distortionCoefficientsL = np.load(paths['individual']+'/distortionCoefficientsL.npy')
             except:
-                print('Failed to load best image combination. Please compute best combination first')
-                singleLCalibration = False
-                sys.exit()
-            else:
-                # Compute intrinsics
-                cameraMatrixL, distortionCoefficientsL, newCameraMatrixL = calibrateSingle('L', lsBestCombination, paths['individual'], squareSize)
-
-                #Save matrices to folder
-                os.chdir(paths['individual'])
-                np.save('distortionCoefficientsL', distortionCoefficientsL)
-                np.save('cameraMatrixL', cameraMatrixL)
-                np.save('newcameraMatrixL', newCameraMatrixL)
-                print('CameraMatrixL, distortionCoefficientsL and newCameraMatrixL computed and saved to file...')
-
-                singleLCalibration = False
-            
-
-    ## After the steps were completed or right at the beginning, load intrinsics from file
-    print('Attempting to load intrinsics from file...')
-    try: 
-        cameraMatrixL = np.load(paths['individual']+'/cameraMatrixL.npy')
-        newCameraMatrixL = np.load(paths['individual']+'/newCameraMatrixL.npy')
-        distortionCoefficientsL = np.load(paths['individual']+'/distortionCoefficientsL.npy')
-    except:
-        print('Error loading camera intrinsics from file. Please restart calibration')
-        singleLCalibration = False
-        sys.exit()
-    else:   
-        print('Camera L intrinsics: fx={fx:.2f}px, fy={fy:.2f}px, cx={cx:.2f}px, cy={cy:.2f}px'.format(fx=newCameraMatrixL[0][0], fy=newCameraMatrixL[1][1], cx=newCameraMatrixL[0][2], cy=newCameraMatrixL[1][2]))
-        print('Camera L distortion coefficients: k1={}, k2={}, p1={}, p2={}, k3={} '.format(distortionCoefficientsL[0][0], distortionCoefficientsL[1][0], distortionCoefficientsL[2][0], distortionCoefficientsL[3][0], distortionCoefficientsL[4][0]))
-     
-
-        # Optional: Show result of calibration for cam
-        if debuggingMode is True: #Works
-                    
+                print('Error loading camera intrinsics from file. Please restart calibration')
+            else:   
+                print('Camera L intrinsics: fx={fx:.2f}px, fy={fy:.2f}px, cx={cx:.2f}px, cy={cy:.2f}px'.format(fx=newCameraMatrixL[0][0], fy=newCameraMatrixL[1][1], cx=newCameraMatrixL[0][2], cy=newCameraMatrixL[1][2]))
+                print('Camera L distortion coefficients: k1={:.5f}, k2={:.5f}, p1={:.5f}, p2={:.5f}, k3={:.5f} '.format(distortionCoefficientsL[0][0], distortionCoefficientsL[1][0], distortionCoefficientsL[2][0], distortionCoefficientsL[3][0], distortionCoefficientsL[4][0]))
+    
+    # Try to run debugging mode
+    if debuggingMode is True: #Works
+        print('Starting debugging for camera L')
+        print('Attempting to load cam L intrinsics from file...')
+        try: 
+            cameraMatrixL = np.load(paths['individual']+'/cameraMatrixL.npy')
+            newCameraMatrixL = np.load(paths['individual']+'/newCameraMatrixL.npy')
+            distortionCoefficientsL = np.load(paths['individual']+'/distortionCoefficientsL.npy')
+        except:
+            print('Error loading camera intrinsics from file. Please restart calibration')
+        else:   
             # Undistort livestream to provide plausability check whether calibration was successfull
             while True:
                 key = cv.waitKey(25)
@@ -1079,73 +1072,69 @@ def getIntrinsicsLeftCamera(capture, paths, singleLGenImages, singleLTestCombina
                 cv.imshow('Camera L - Original', frame)
                 cv.imshow('Camera L - Undistored', dst)
 
-    print('{:^75s}'.format('_____ Finished computing intrinsics for left camera _____'))
-
-    return newCameraMatrixL
 
 def getIntrinsicsRightCamera(capture, paths, singleRGenImages, singleRTestCombinations, singleRCalibration, debuggingMode):
-
-    print('.\n{:^75s}'.format('_____ Computing intrinsics for right camera _____\n.'))
-
-   ## If any of the steps to calibration must be completed, enter loop until they finish
-    while (singleRGenImages is True) or (singleRTestCombinations is True) or (singleRCalibration is True):
     
-        if singleRGenImages is True: #Works
-            
-            generateImgsSingle(capture, 'R', paths['indCamR'], numImgsGenerateSingle)
-            singleRGenImages = False
+    if singleRGenImages is True: #Works
 
-        elif singleRTestCombinations is True: #Works
+        generateImgsSingle(capture, 'R', paths['indCamR'])
+
+    elif singleRTestCombinations is True: #Works
+    
+        print('Computing best image combination for camera R')
+        # Create a dictionary with paths to all images and their respective image points 
+        dict_pathsPoints = loadImgsandImgPoints('Single', None, paths['indCamR'])
+
+        # Find best combination for all images
+        lsBestCombination = testAllImgCombinations('Single', dict_pathsPoints, 'R', paths['individual'])
+
+
+    elif singleRCalibration == True: #Works
+
+        # Load list with best combination from file
+        try:
+            lsBestCombination = np.load(paths['individual']+'/best_combination_camR.npy')
+        except:
+            print('Failed to load best image combination. Please compute best combination first')
+
+        else:
+            # Compute intrinsics
+            cameraMatrixR, distortionCoefficientsR, newCameraMatrixR = calibrateSingle('R', lsBestCombination, paths['individual'], squareSize)
+
+            # Save matrices to folder
+            os.chdir(paths['individual'])
+            np.save('distortionCoefficientsR', distortionCoefficientsR)
+            np.save('cameraMatrixR', cameraMatrixR)
+            np.save('newcameraMatrixR', newCameraMatrixR)
+            print('Camera R intrinsics: fx={fx:.2f}px, fy={fy:.2f}px, cx={cx:.2f}px, cy={cy:.2f}px'.format(fx=newCameraMatrixR[0][0], fy=newCameraMatrixR[1][1], cx=newCameraMatrixR[0][2], cy=newCameraMatrixR[1][2]))
+            print('Camera R distortion coefficients: k1={:.5f}, k2={:.5f}, p1={:.5f}, p2={:.5f}, k3={:.5f} '.format(distortionCoefficientsR[0][0], distortionCoefficientsR[1][0], distortionCoefficientsR[2][0], distortionCoefficientsR[3][0], distortionCoefficientsR[4][0]))
+            print('CameraMatrix, distortionCoefficients and newCameraMatrix computed and saved to file...')
+
+    else:
+
+        print('Attempting to load cam R intrinsics from file...')
+        try: 
+            cameraMatrixR = np.load(paths['individual']+'/cameraMatrixR.npy')
+            newCameraMatrixR = np.load(paths['individual']+'/newCameraMatrixR.npy')
+            distortionCoefficientsR = np.load(paths['individual']+'/distortionCoefficientsR.npy')
+        except:
+            print('Error loading camera intrinsics from file. Please restart calibration')
+        else: 
+            print('Camera R intrinsics: fx={fx:.2f}px, fy={fy:.2f}px, cx={cx:.2f}px, cy={cy:.2f}px'.format(fx=newCameraMatrixR[0][0], fy=newCameraMatrixR[1][1], cx=newCameraMatrixR[0][2], cy=newCameraMatrixR[1][2]))
+            print('Camera R distortion coefficients: k1={:.5f}, k2={:.5f}, p1={:.5f}, p2={:.5f}, k3={:.5f} '.format(distortionCoefficientsR[0][0], distortionCoefficientsR[1][0], distortionCoefficientsR[2][0], distortionCoefficientsR[3][0], distortionCoefficientsR[4][0]))
+
+    # Try to run debugging mode
+
+    if debuggingMode is True: #Works
         
-            print('.\nComputing best image combination for camera R\n.')
-            # Create a dictionary with paths to all images and their respective image points 
-            dict_pathsPoints = loadImgsandImgPoints('Single', None, paths['indCamR'])
-
-            # Find best combination for all images
-            lsBestCombination = testAllImgCombinations('Single', dict_pathsPoints, 'R', paths['individual'])
-
-            singleRTestCombinations = False
-
-        elif singleRCalibration == True: #Works
-
-            # Load list with best combination from file
-            try:
-                lsBestCombination = np.load(paths['individual']+'/best_combination_camR.npy')
-            except:
-                print('Failed to load best image combination. Please compute best combination first')
-                singleRCalibration = False
-                sys.exit()
-
-            else:
-                # Compute intrinsics
-                cameraMatrixR, distortionCoefficientsR, newCameraMatrixR = calibrateSingle('R', lsBestCombination, paths['individual'], squareSize)
-
-                # Save matrices to folder
-                os.chdir(paths['individual'])
-                np.save('distortionCoefficientsR', distortionCoefficientsR)
-                np.save('cameraMatrixR', cameraMatrixR)
-                np.save('newcameraMatrixR', newCameraMatrixR)
-                print('CameraMatrix, distortionCoefficients and newCameraMatrix computed and saved to file...')
-
-                singleRCalibration = False
-                
-
-    ## After the steps were completed or right at the beginning, load intrinsics from file
-    print('Attempting to load intrinsics from file...')
-    try: 
-        cameraMatrixR = np.load(paths['individual']+'/cameraMatrixR.npy')
-        newCameraMatrixR = np.load(paths['individual']+'/newCameraMatrixR.npy')
-        distortionCoefficientsR = np.load(paths['individual']+'/distortionCoefficientsR.npy')
-    except:
-        print('Error loading camera intrinsics from file. Please restart calibration')
-        sys.exit()
-    else: 
-        print('Camera R intrinsics: fx={fx:.2f}px, fy={fy:.2f}px, cx={cx:.2f}px, cy={cy:.2f}px'.format(fx=newCameraMatrixR[0][0], fy=newCameraMatrixR[1][1], cx=newCameraMatrixR[0][2], cy=newCameraMatrixR[1][2]))
-        print('Camera R distortion coefficients: k1={}, k2={}, p1={}, p2={}, k3={} '.format(distortionCoefficientsR[0][0], distortionCoefficientsR[1][0], distortionCoefficientsR[2][0], distortionCoefficientsR[3][0], distortionCoefficientsR[4][0]))
-
-        # Optional: Show result of calibration for cam
-        if debuggingMode is True: #Works
-                    
+        print('Attempting to load cam R intrinsics from file...')
+        try: 
+            cameraMatrixR = np.load(paths['individual']+'/cameraMatrixR.npy')
+            newCameraMatrixR = np.load(paths['individual']+'/newCameraMatrixR.npy')
+            distortionCoefficientsR = np.load(paths['individual']+'/distortionCoefficientsR.npy')
+        except:
+            print('Error loading camera intrinsics from file. Please restart calibration')
+        else: 
             # Undistort livestream to provide plausability check whether calibration was successfull
             while True:
                 key = cv.waitKey(25)
@@ -1160,64 +1149,57 @@ def getIntrinsicsRightCamera(capture, paths, singleRGenImages, singleRTestCombin
                 cv.imshow('Camera R - Original', frame)
                 cv.imshow('Camera R - Undistored', dst)
 
-    print('{:^75s}'.format('.\n_____ Finished computing intrinsics for right camera _____\n.'))
 
 def calibrateStereoSetup(capL, capR, paths, stereoGenImages, stereoTestCombinations, stereoCalibration, debuggingMode):
-
-    print('.\n{:^75s}'.format('_____ Computing stereo parameters _____\n.'))
     
-    # If any of the steps to calibration must be completed, enter loop until they finish
-    while (stereoGenImages is True) or (stereoTestCombinations is True) or (stereoCalibration is True):
+    stereoTranslation = 0
+
+    if stereoGenImages is True: #Works 
+
+        generateImagesStereo(capL, capR, paths['stCamL'], paths['stCamR'])
+
+    elif stereoTestCombinations is True: #Works
     
-        if stereoGenImages is True: #Works 
+        print('Computing best image combination for stereo setup')
+        # Load all image paths and their image points
+        dict_pathsPoints = loadImgsandImgPoints('Stereo', paths['stCamL'], paths['stCamR']) 
 
-            generateImagesStereo(capL, capR, paths['stCamL'], paths['stCamR'])
-            stereoGenImages = False
-
-        elif stereoTestCombinations is True: #Works
+        # Find best combination for all images
+        lsBestCombination = testAllImgCombinations('Stereo', dict_pathsPoints, None, paths['stereo'])
         
-            print('Computing best image combination for stereo setup')
-            # Load all image paths and their image points
-            dict_pathsPoints = loadImgsandImgPoints('Stereo', paths['stCamL'], paths['stCamR']) 
 
-            # Find best combination for all images
-            lsBestCombination = testAllImgCombinations('Stereo', dict_pathsPoints, None, paths['stereo'])
-            
-            stereoTestCombinations = False
+    elif stereoCalibration is True: #Works
 
-        elif stereoCalibration is True: #Works
+        # Load list with best combination from file
+        try:
+            lsBestCombination = np.load(paths['stereo']+'/best_combination_stereo.npy')
 
-            # Load list with best combination from file
-            try:
-                lsBestCombination = np.load(paths['stereo']+'/best_combination_stereo.npy')
+            # Load intrinsics from file
+            newCameraMatrixL = np.load(paths['individual']+'/newCameraMatrixL.npy')
+            distortionCoefficientsL = np.load(paths['individual']+'/distortionCoefficientsL.npy')
+            newCameraMatrixR = np.load(paths['individual']+'/newCameraMatrixR.npy')
+            distortionCoefficientsR = np.load(paths['individual']+'/distortionCoefficientsR.npy')
+            stereoTranslation = np.load(paths['stereo']+'/translationVector.npy')
+        
+        except: 
+            print('Failed to load best image combination or camera intrinsics. Please restart calibration')
 
-                # Load intrinsics from file
-                newCameraMatrixL = np.load(paths['individual']+'/newCameraMatrixL.npy')
-                distortionCoefficientsL = np.load(paths['individual']+'/distortionCoefficientsL.npy')
-                newCameraMatrixR = np.load(paths['individual']+'/newCameraMatrixR.npy')
-                distortionCoefficientsR = np.load(paths['individual']+'/distortionCoefficientsR.npy')
-            
-            except: 
-                print('Failed to load best image combination or camera intrinsics. Please restart calibration')
-                sys.exit()
-            else: 
-                # Compute stereo parameters
-                calibrateStereo(lsBestCombination, paths, newCameraMatrixL, distortionCoefficientsL, newCameraMatrixR, distortionCoefficientsR)
+        else: 
+            # Compute stereo parameters
 
-                stereoCalibration = False
-            
-    # Otherwise just load the stereo parameters
-    print('Attempting to load stereo parameters from file..')
-    try:
-        stereoRotation = np.load(paths['stereo']+'/rotationVector.npy')
-        stereoTranslation = np.load(paths['stereo']+'/translationVector.npy')
-        print('Translation from camera R to camera L: x={:.2f}cm, y={:.2f}cm, z={:.2f}cm'.format(stereoTranslation[0][0], stereoTranslation[1][0], stereoTranslation[2][0]))
-    except:
-        print('Could not load stereo parameters from file. Please recalibrate stereo setup..')
-        sys.exit()
-
-    print('.\n{:^75s}'.format('_____ Finished computing stereo parameters _____\n.'))
+            calibrateStereo(lsBestCombination, paths, newCameraMatrixL, distortionCoefficientsL, newCameraMatrixR, distortionCoefficientsR)
+            print('Translation from camera R to camera L: x={:.2f}cm, y={:.2f}cm, z={:.2f}cm'.format(stereoTranslation[0][0], stereoTranslation[1][0], stereoTranslation[2][0]))
+   
+    else:
+        print('Attempting to load stereo parameters from file..')
+        try:
+            stereoRotation = np.load(paths['stereo']+'/rotationVector.npy')
+            stereoTranslation = np.load(paths['stereo']+'/translationVector.npy')
+            print('Translation from camera R to camera L: x={:.2f}cm, y={:.2f}cm, z={:.2f}cm'.format(stereoTranslation[0][0], stereoTranslation[1][0], stereoTranslation[2][0]))
+        except:
+            print('Could not load stereo parameters from file. Please recalibrate stereo setup..')
     
+
     return stereoTranslation
 
 def getRectificationMap(capL, capR, paths, newRectificationMapping, debuggingMode): #works
@@ -1232,7 +1214,6 @@ def getRectificationMap(capL, capR, paths, newRectificationMapping, debuggingMod
             distortionCoefficientsR = np.load(paths['individual']+'/distortionCoefficientsR.npy')
         except: 
             print('Please compute intrinics for both cameras before starting rectification.')
-            sys.exit()
         else:
             try:
                 # Load stereo parameters
@@ -1243,7 +1224,6 @@ def getRectificationMap(capL, capR, paths, newRectificationMapping, debuggingMod
                 lsBestCombination = np.load(paths['stereo']+'/best_combination_stereo.npy')
             except:
                 print('Please compute stereo parameters before starting rectification.')
-                sys.exit()
             else:
         
                 # Load images for mapping
@@ -1279,6 +1259,7 @@ def getRectificationMap(capL, capR, paths, newRectificationMapping, debuggingMod
                 print('Saved rectification maps to file...')
 
     else:
+        print('Attempting to load rectification maps from file...')
         try:
             # Load from file
             leftMapX = np.load(paths['stereo']+'/rectificationMapCamLX.npy')
@@ -1291,58 +1272,68 @@ def getRectificationMap(capL, capR, paths, newRectificationMapping, debuggingMod
             print('Loaded rectification maps from file...')
         except:
             print('Please initiate new rectification mapping.')
-            sys.exit()
         
     
     if debuggingMode is True: #work
+        print('Starting debugging mode for stereo setup')
 
-        newCameraMatrixL = np.load(paths['individual']+'/newCameraMatrixL.npy')
-        distortionCoefficientsL = np.load(paths['individual']+'/distortionCoefficientsL.npy')
-        newCameraMatrixR = np.load(paths['individual']+'/newCameraMatrixR.npy')
-        distortionCoefficientsR = np.load(paths['individual']+'/distortionCoefficientsR.npy')
-        stereoTranslation = np.load(paths['stereo']+'/translationVector.npy')
+        print('Attempting to load camera intrinsics and rectification maps from file...')
+        try:
+            # Load from file
+            leftMapX = np.load(paths['stereo']+'/rectificationMapCamLX.npy')
+            leftMapY = np.load(paths['stereo']+'/rectificationMapCamLY.npy')
+            rightMapX = np.load(paths['stereo']+'/rectificationMapCamRX.npy')
+            rightMapY = np.load(paths['stereo']+'/rectificationMapCamRY.npy')
+            rectifiedCameraMatrixL = np.load(paths['stereo']+'/rectifiedCameraMatrixL.npy')
+            rectifiedCameraMatrixR = np.load(paths['stereo']+'/rectifiedCameraMatrixR.npy')
+            stereoTranslation = np.load(paths['stereo']+'/translationVector.npy')
+            Q = np.load(paths['stereo']+'/reprojectionMatrixQ.npy')
+            print('Loaded rectification maps from file...')
+        except:
+            print('Please initiate new rectification mapping.')
 
         # Take an image of a horizontal chessboard for debugging purposes
-        # while True:
+        
+        while True:
+            key = cv.waitKey(25)
 
-        #     key = cv.waitKey(25)
+            if key == 27:
+                print('Program was terminated by user..')
+                sys.exit()
 
-        #     if key == 27:
-        #         print('Program was terminated by user..')
-        #         sys.exit()
-
-        #     isTrueL, frameL = capL.read()
-        #     isTrueR, frameR = capR.read()
-        #     cv.imshow('Camera L', frameL)
-        #     cv.imshow('Camera R', frameR)
+            isTrueL, frameL = capL.read()
+            isTrueR, frameR = capR.read()
+            cv.imshow('Camera L', frameL)
+            cv.imshow('Camera R', frameR)
             
-        #     tempL = frameL.copy()
-        #     tempR = frameR.copy()
+            tempL = frameL.copy()
+            tempR = frameR.copy()
 
-        #     grayL = cv.cvtColor(tempL,cv.COLOR_BGR2GRAY)
-        #     grayR = cv.cvtColor(tempR,cv.COLOR_BGR2GRAY)
-        #     imgSize = grayL.shape[::-1]
-        #     retL, cornersL = cv.findChessboardCorners(grayL, boardSize, None)
-        #     retR, cornersR = cv.findChessboardCorners(grayR, boardSize, None)
+            grayL = cv.cvtColor(tempL,cv.COLOR_BGR2GRAY)
+            grayR = cv.cvtColor(tempR,cv.COLOR_BGR2GRAY)
+            imgSize = grayL.shape[::-1]
+            retL, cornersL = cv.findChessboardCorners(grayL, boardSize, None)
+            retR, cornersR = cv.findChessboardCorners(grayR, boardSize, None)
 
-        #     if (retL == True) and (retR == True):
-        #         cv.drawChessboardCorners(tempL, boardSize, cornersL, retL)
-        #         cv.drawChessboardCorners(tempR, boardSize, cornersR, retR)
-        #         cv.putText(tempL, 'Pattern found. Press SPACE key to check rectification',(imgSize[0]//3, 40), font, fontScale, (0, 255, 255), 2, cv.LINE_AA)
-        #         cv.putText(tempR, 'Pattern found. Press SPACE key to check rectification',(imgSize[0]//3, 40), font, fontScale, (0, 255, 255), 2, cv.LINE_AA)
+            if (retL == True) and (retR == True):
+                cv.drawChessboardCorners(tempL, boardSize, cornersL, retL)
+                cv.drawChessboardCorners(tempR, boardSize, cornersR, retR)
+                cv.putText(tempL, 'Pattern found. Press SPACE key to check rectification',(imgSize[0]//3, 40), font, fontScale, (0, 255, 255), 2, cv.LINE_AA)
+                cv.putText(tempR, 'Pattern found. Press SPACE key to check rectification',(imgSize[0]//3, 40), font, fontScale, (0, 255, 255), 2, cv.LINE_AA)
 
-        #         cv.imshow('Camera L', tempL)
-        #         cv.imshow('Camera R', tempR)
+                cv.imshow('Camera L', tempL)
+                cv.imshow('Camera R', tempR)
 
-        #         if key == ord(' '):
-        #             imgPathL = paths['stereoTesting']+'/camLTesting.png'
-        #             imgPathR = paths['stereoTesting']+'/camRTesting.png'
+                if key == ord(' '):
+                    imgPathL = paths['stereoTesting']+'/camLTesting.png'
+                    imgPathR = paths['stereoTesting']+'/camRTesting.png'
 
-        #             cv.imwrite(imgPathL,frameL)
-        #             cv.imwrite(imgPathR,frameR)
-        #             break
+                    cv.imwrite(imgPathL,frameL)
+                    cv.imwrite(imgPathR,frameR)
+                    break
 
-        # cv.destroyAllWindows()
+        cv.destroyAllWindows()
+        print('Press any key to close this view')
 
         # Load and rectify the image pair
         imgL = cv.imread(paths['stereoTesting']+'/camLTesting.png')
@@ -1443,10 +1434,10 @@ def getRectificationMap(capL, capR, paths, newRectificationMapping, debuggingMod
 
 
 def initialiseCorrespondence():
-        minDisparity = 0 #192
+        minDisparity = 192
         maxDisparity = 272
         numDisparities = maxDisparity-minDisparity
-        blockSize = 3
+        blockSize = 5
         disp12MaxDiff = 5
         uniquenessRatio = 15
 
@@ -1562,4 +1553,3 @@ def getDepth(Left_rectified, Right_rectified, Q, debuggingMode, left_matcher, ri
 
 
     return points_3D, colored_disp
-# %%

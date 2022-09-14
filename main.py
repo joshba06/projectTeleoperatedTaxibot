@@ -19,9 +19,11 @@ parser.add_argument("--initialInstallation", type=bool, default=False)
 parser.add_argument("--debugging", type=bool, default=False)
 args = parser.parse_args()
 
-print('{:^75s}'.format('\n_____Starting project "teleoperatedTaxibot"_____\n'))
+print('\n\n\n\n\n________________Starting project "teleoperatedTaxibot"________________\n\n')
 
-print('{:75s}'.format('Home path set to: '+userSettings['homePath']))
+print('\n________________1. System setup________________\n')
+
+print('Home path set to: '+userSettings['homePath'])
 
 # Setup folder structure and install extented packages
 if args.initialInstallation == True:
@@ -31,7 +33,7 @@ elif args.initialInstallation == False:
 
 
 #%% Camera setup
-print('{:^75s}'.format('\n_____Starting camera setup_____\n'))
+print('\n\n________________2. Camera setup________________\n')
 
 # Check whether debugging mode shall be started
 if args.debugging == True:
@@ -45,16 +47,20 @@ import numpy as np
 import cameraSetup as cameraSetup
 
 # Open camera capture
-capL = cv.VideoCapture(1)
-# capR = cv.VideoCapture(0)
+try:
+    capL = cv.VideoCapture(0)
+    capR = cv.VideoCapture(2)
+except:
+    print('Cannot find correct (internal) camera ports. Please visit main.py on line 50 and exchange values 0 to 2 for other values, usually 1, 2 or 3 depending on the number of cameras that are connected')
+    sys.exit()
 
 # Loop control for camera setup
 cameraSetupCompleted = False
 while cameraSetupCompleted == False:
 
-    print('__Main menu__')
+    print("\n\033[4m" + 'Main menu' + "\033[0m")
 
-    selectionMain = input('Enter "Q" to exit program\nEnter "0" to check if cameras are connected properly\nEnter "1" to set up left camera\nEnter "2" to set up right camera\nEnter "3" to setup stereo system\nEnter "4" to start program with settings from file\n')
+    selectionMain = input('-Enter "Q" to exit program\n-Enter "0" to check if cameras are connected properly\n-Enter "1" to set up left camera\n-Enter "2" to set up right camera\n-Enter "3" to setup stereo system\n-Enter "4" to start program with settings from file\n')
 
     # Quit program
     if selectionMain == 'Q':
@@ -65,26 +71,27 @@ while cameraSetupCompleted == False:
     elif selectionMain == '0':
 
         print('Checking camera configuration..')
-        print('Press the ESC key to quit or press SPACE key to confirm correct connection')
+        print('Click on one pop up window and press the ESC key to quit or SPACE key to confirm correct camera arrangement')
         
         while True:
             key = cv.waitKey(25)
 
             if key == 27:
-                print('Going back to main screen. Cameras have been switched')
-                capL = cv.VideoCapture(0)
-                # capR = cv.VideoCapture(1)
+                print('Terminating program. Please switch the ports that you connected your cameras to (A->B, B->A)')
+                cv.destroyAllWindows()
+                break
                 
             elif key == ord(' '):
                 print('Correct alignment of cameras confirmed...')
+                cv.destroyAllWindows()
                 break
 
             # Display livestream of camera
             isTrueL, frameL = capL.read()
-            #isTrueR, frameR = capR.read()
+            isTrueR, frameR = capR.read()
 
             cv.imshow('Camera L', frameL)
-            #cv.imshow('Camera R', frameR)
+            cv.imshow('Camera R', frameR)
 
         cv.destroyAllWindows()
     
@@ -93,11 +100,16 @@ while cameraSetupCompleted == False:
         
         leftCameraCompleted = False
         while leftCameraCompleted == False:
-            print('\n____Left camera menu____')
-            selectionLeftCam = input('__Enter "B" to get back to main menue\n__Enter "1" to generate new images\n__Enter "2" to find best image combination\n__Enter "3" to calibrate camera\n')
+            print("\n\033[4m" + 'Main menu -> Left camera menu' + "\033[0m")
+            selectionLeftCam = input('-Enter "Q" to exit program\n-Enter "B" to get back to main menu\n-Enter "1" to generate new images\n-Enter "2" to find best image combination\n-Enter "3" to calibrate camera\n')
+         
+            # Quit program
+            if selectionLeftCam == 'Q':
+                print('Program terminated by user...')
+                sys.exit()
 
-            # Go back to main menue
-            if selectionLeftCam == 'B':
+            # Go back to main menu
+            elif selectionLeftCam == 'B':
                 leftCameraCompleted = True
 
             # Generate new images
@@ -120,11 +132,16 @@ while cameraSetupCompleted == False:
         
         rightCameraCompleted = False
         while rightCameraCompleted == False:
-            print('\n____Right camera menu____')
-            selectionRightCam = input('__Enter "B" to get back to main menue\n__Enter "1" to generate new images\n__Enter "2" to find best image combination\n__Enter "3" to calibrate camera\n')
+            print("\n\033[4m" + 'Main menu -> Right camera menu' + "\033[0m")
+            selectionRightCam = input('-Enter "Q" to exit program\n-Enter "B" to get back to main menu\n-Enter "1" to generate new images\n-Enter "2" to find best image combination\n-Enter "3" to calibrate camera\n')
 
-            # Go back to main menue
-            if selectionRightCam == 'B':
+            # Quit program
+            if selectionRightCam == 'Q':
+                print('Program terminated by user...')
+                sys.exit()
+
+            # Go back to main menu
+            elif selectionRightCam == 'B':
                 rightCameraCompleted = True
 
             # Generate new images
@@ -144,13 +161,15 @@ while cameraSetupCompleted == False:
 
     # Stereo setup
     elif selectionMain == '3':
+
         
         stereoCompleted = False
         while stereoCompleted == False:
-            print('\n____Stereo menu____')
-            selectionStereo = input('__Enter "B" to get back to main menue\n__Enter "1" to generate new images\n__Enter "2" to find best image combination\n__Enter "3" to calibrate stereo\n')
+            print('_____ Computing stereo parameters _____\n')
+            print('\nMain menu -> Stereo menu')
+            selectionStereo = input('__Enter "B" to get back to main menu\n__Enter "1" to generate new images\n__Enter "2" to find best image combination\n__Enter "3" to calibrate stereo\n')
 
-            # Go back to main menue
+            # Go back to main menu
             if selectionStereo == 'B':
                 stereoCompleted = True
 
@@ -168,9 +187,13 @@ while cameraSetupCompleted == False:
 
                 leftMapX, leftMapY, rightMapX, rightMapY, Q, rectifiedCameraMatrixL = cameraSetup.getRectificationMap(capL, capR, paths, newRectificationMapping=True, debuggingMode=debuggingMode)
                 stereoCompleted = True
+            
+            print('.\n_____ Finished computing stereo parameters _____\n.')
 
     # Load parameters from file
     elif selectionMain == '4':
+
+        print('\n_____ Loading all parameters from file _____\n')
 
         # Camera intrinsics
         cameraSetup.getIntrinsicsLeftCamera(capL, paths, singleLGenImages=False, singleLTestCombinations=False, singleLCalibration=False, debuggingMode=debuggingMode)
@@ -180,17 +203,16 @@ while cameraSetupCompleted == False:
         Trns = cameraSetup.calibrateStereoSetup(capL, capR, paths, stereoGenImages=False, stereoTestCombinations=False, stereoCalibration=False, debuggingMode=debuggingMode)
         leftMapX, leftMapY, rightMapX, rightMapY, Q, rectifiedCameraMatrixL = cameraSetup.getRectificationMap(capL, capR, paths, newRectificationMapping=False, debuggingMode=debuggingMode)
         stereoCompleted = True
+        cameraSetupCompleted = True
 
     else:
         print('No option was selected. Please try again...')
 
-print('{:^75s}'.format('\n_____Finished camera setup_____\n'))
-
 
 #%% Object detection setup
-print('{:^75s}'.format('\n_____Initiating object detection_____\n'))
+print('\n________________3. Object detection initialisation________________\n')
 
-print('Importing required modules')
+print('Importing modules for object detection')
 import tensorflow as tf
 import object_detection
 from object_detection.utils import label_map_util
@@ -236,35 +258,40 @@ def detect_fn(image):
 path_labelmap = path_model+'/label_map.pbtxt'
 category_index = label_map_util.create_category_index_from_labelmap(path_labelmap)
 
-print('{:^75s}'.format('\n_____Initiation complete_____\n'))
-
 
 #%% Main routine
-print('{:^75s}'.format('\n_____Starting taxibot livestream_____\n'))
+print('\n________________4. Starting Taxibot livestream________________\n')
 
 # Initiate correspondence algorithms
-left_matcher, right_matcher, wls_filter = cameraSetup.initialiseCorrespondence()
+# left_matcher, right_matcher, wls_filter = cameraSetup.initialiseCorrespondence()
 
 new_frame_time = 0
 prev_frame_time = 0
 while True:
     key = cv.waitKey(1)
 
+    isTrueL, frameL = capL.read()
+    isTrueR, frameR = capR.read()
+
+    Left_rectified = cv.remap(frameL,leftMapX,leftMapY, cv.INTER_LINEAR, cv.BORDER_CONSTANT)
+    Right_rectified = cv.remap(frameR,rightMapX,rightMapY, cv.INTER_LINEAR, cv.BORDER_CONSTANT)
+
+    height, width, channels = Left_rectified.shape
+
     if key == 27:
         print('Program was terminated by user..')
         sys.exit()
+    
+    elif key == ord(' '):
+        cv.imwrite(paths['3_Output']+'/camL.png',Left_rectified)
 
-    isTrueL, frameL = capL.read()
-    #isTrueR, frameR = capR.read()
 
-    Left_rectified = cv.remap(frameL,leftMapX,leftMapY, cv.INTER_LINEAR, cv.BORDER_CONSTANT)
-    #Right_rectified = cv.remap(frameR,rightMapX,rightMapY, cv.INTER_LINEAR, cv.BORDER_CONSTANT)
 
-    heightL, widthL, channelsL = Left_rectified.shape
+
 
     #points_3D, colored_disp = cameraSetup.getDepth(Left_rectified, Right_rectified, Q, debuggingMode, left_matcher, right_matcher, wls_filter)
 
-    # Detect object on LEFT rectified camera stream
+    # Detect object on left rectified camera stream
     image_np = np.array(Left_rectified)
     input_tensor = tf.convert_to_tensor(np.expand_dims(image_np, 0), dtype=tf.float32)
     detections = detect_fn(input_tensor)
@@ -275,10 +302,10 @@ while True:
     detections['num_detections'] = num_detections
     detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
     label_id_offset = 1
-    image_np_with_detectionsL = image_np.copy()
+    image_np_with_detections = image_np.copy()
 
-    image_np_with_detectionsL, aryfoundL = viz_utils.visualize_boxes_and_labels_on_image_array(
-                image_np_with_detectionsL,
+    image_np_with_detections, aryFound = viz_utils.visualize_boxes_and_labels_on_image_array(
+                image_np_with_detections,
                 detections['detection_boxes'],
                 detections['detection_classes']+label_id_offset,
                 detections['detection_scores'],
@@ -288,32 +315,38 @@ while True:
                 min_score_thresh=.8,
                 agnostic_mode=False)
 
-    if aryfoundL != 0:
-        xmin = aryfoundL['xmin']*widthL
-        xmax = aryfoundL['xmax']*widthL
-        ymin = aryfoundL['ymin']*heightL
-        ymax = aryfoundL['ymax']*heightL
-        #print('Found {} at location x={}pixels, y={}pixels'.format(aryfound['class'], xmin, ymin))
+    if aryFound != 0:
 
-        # Location (centre of object) as seen from left rectified camera
-        x_centreL = xmin+0.5*(xmax-xmin)
-        x_centreL = int(x_centreL)
-        y_centreL = ymin+0.5*(ymax-ymin)
-        y_centreL = int(y_centreL)
+        keys = aryFound.keys()
 
-        ## Print information
+        for key in keys:
 
-        # Mark point
-        cv.putText(image_np_with_detectionsL, 'x', (x_centreL, y_centreL), cv.FONT_HERSHEY_PLAIN, 2, (0, 255, 255), 2, cv.LINE_AA)
+            object = key.split(':')[0]
+            accuracy = key.split(':')[1]
 
-        # Depth via PCL
+            xmin = aryFound[key][0]*width
+            xmax = aryFound[key][1]*width
+            ymin = aryFound[key][2]*height
+            ymax = aryFound[key][3]*height
+
+            # Location (centre of object) as seen from left rectified camera
+            x_centre = xmin+0.5*(xmax-xmin)
+            x_centre = int(x_centre)
+            y_centre = ymin+0.5*(ymax-ymin)
+            y_centre = int(y_centre)
+
+            # Mark point
+            cv.putText(image_np_with_detections, 'x', (x_centre, y_centre), cv.FONT_HERSHEY_PLAIN, 2, (0, 255, 255), 2, cv.LINE_AA)
+
+
+    #     # Depth via PCL
         #depthPCL = points_3D[y_centreL][x_centreL][2]
         #depth_text_PCL = ('Depth from PCL: z = {:.2f}cm'.format(depthPCL))
 
 
         #cv.putText(image_np_with_detectionsL, depth_text_PCL, (x_centreL, y_centreL), cv.FONT_HERSHEY_PLAIN, 2, (0, 255, 255), 2, cv.LINE_AA)
     
-    cv.imshow('Camera Left - Detection Mode', image_np_with_detectionsL)
+    cv.imshow('Camera Left - Detection Mode', image_np_with_detections)
     #cv.imshow('Disparity', colored_disp)
 
 
@@ -322,7 +355,7 @@ while True:
     prev_frame_time = new_frame_time
     fps = int(fps)
     fps = ('FPS: {:.2f}'.format(fps))
-    cv.putText(image_np_with_detectionsL, fps, (7, 70), cv.FONT_HERSHEY_PLAIN, 3, (100, 255, 0), 1, cv.LINE_AA)
+    cv.putText(image_np_with_detections, fps, (7, 70), cv.FONT_HERSHEY_PLAIN, 3, (100, 255, 0), 1, cv.LINE_AA)
 
 
  
