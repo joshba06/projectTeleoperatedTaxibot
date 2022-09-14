@@ -162,30 +162,17 @@ def installBasicPackages():
 
 def installOpenCV():
 
-    for i in range(len(installed_packages_list)):
-        package_name = installed_packages_list[i].split('==')[0]
-
-        if package_name == 'opencv-contrib-python':
-            package_version = installed_packages_list[i].split('==')[1]
-
-            if package_version == '4.6.0.66':
-                print('Package: "{}" version: {} is installed. Required version: {}. Ok...'.format(package_name, package_version,'4.6.0.66'))
-            else:
-                print('Package: "{}" version: {} is installed. Required version: {}. Uninstalling...'.format(package_name, package_version,'4.6.0.66'))
-                uninstall(package_name)
-                print('Package: {} version: {}. Installing...'.format(package_name,'4.6.0.66'))
-                install('opencv-contrib-python==4.6.0.66') 
-
-        elif ('opencv' in package_name) and (package_name != 'opencv-contrib-python'):
-            print('Package: "{}" is installed. Package: "{}" required. Uninstalling ...'.format(package_name, 'opencv-contrib-python'))
-            uninstall(package_name)
-            print('Package: "{}" version: {}. Installing...'.format('opencv-contrib-python','4.6.0.66'))
-            install('opencv-contrib-python==4.6.0.66')
-        
+    os.system('pip uninstall opencv-python-headless -y')
+    os.system('pip uninstall opencv-python -y')
+    os.system('pip uninstall opencv-contrib-contrib-headless -y')
+    try:
+        import cv2
+        if cv2.__version__ != '4.6.0':
+            os.system('pip install opencv-contrib-python==4.6.0.66')
         else:
-            break
-        
-    install('opencv-contrib-python==4.6.0.66')
+            print('opencv-contrib-python==4.6.0.66 is installed')
+    except:
+        os.system('pip install opencv-contrib-python==4.6.0.66')
 
 def installAlbumentation():
     os.system('pip install -U albumentations --no-binary qudida,albumentations')
@@ -323,8 +310,15 @@ def installODAPI(paths):
         file_name = 'visualization_utils.py'
         source = paths['0_UserInput']+'/scripts/objectDetectionModCode.py'
 
-        dest_1 = sys.prefix+'/lib/python3.9/site-packages/object_detection/utils'
+        ##____ Changes this below
+        path_venv = os.environ['VIRTUAL_ENV']
+        dest_1 = path_venv+'/lib/python3.9/site-packages/object_detection/utils'
         dest_2 = paths['2_Tensorflow']+'/models/research/object_detection/utils'
+
+        ## ____ Stop of change
+
+        # dest_1 = sys.prefix+'/lib/python3.9/site-packages/object_detection/utils'
+        # dest_2 = paths['2_Tensorflow']+'/models/research/object_detection/utils'
 
         os.remove(dest_1+'/'+file_name)
         os.remove(dest_2+'/'+file_name)
