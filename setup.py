@@ -13,45 +13,36 @@ import pkg_resources
 installed_packages = pkg_resources.working_set
 installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
 
+import userSettings
+system_paths = userSettings.main()
+path_venv = system_paths['path_to_local_interpreter']
+
 def getIndex(element, array):
     for i in range(len(array)):
-        name = array[i].split('==')[0]
-        if element == name:
+        if element == array[i]:
             index = i
             break   
     return index
 
+
 def moveAllContent(source, destination):
     
     items = os.listdir(source)
-    # directories = [item for item in items if (os.path.isdir(source+'/'+item))]
-    # files = [item for item in items if (os.path.isfile(source+'/'+item))]
 
-    # Remove .DS Store files
-    # if '.DS_Store' in directories:
-    #     directories.remove('.DS_Store')
-
-    # if '.DS_Store' in files:
-    #     files.remove('.DS_Store')
     if '.DS_Store' in items:
         items.remove('.DS_Store')
-
-    # for directory in directories:
-    #     print('Copying {} from {} to {}'.format(directory, source+'/'+directory, destination))
-    #     shutil.move(source+'/'+directory, destination)
-        
-    # for file in files:
-    #     shutil.move(source+'/'+file, destination)
 
     for item in items:
         shutil.move(source+'/'+item, destination)
 
+
+
+
 def install(package):
-    subprocess.run([sys.executable, "-m", "pip", "install", package])
+    subprocess.call([path_venv, "-m", "pip", "install", package])
 
 def uninstall(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "uninstall", package, "-y"])
-
+    subprocess.check_call([path_venv, "-m", "pip", "uninstall", package, "-y"])
 
 
 #%% Create folder structure
@@ -64,7 +55,8 @@ def createFolderStructure(labels, home_path, colab=False):
         'objects': os.path.join(home_path,'0_UserInput/objects'),
         'trainedModels': os.path.join(home_path,'0_UserInput/trainedModels'),
         'scripts': os.path.join(home_path,'0_UserInput/scripts'),
-
+        'requiredPackages': os.path.join(home_path,'0_UserInput/requiredPackages'),
+        
         
         '1_CameraCalibration': os.path.join(home_path,'1_Calibration'),
         'stereo': os.path.join(home_path,'1_Calibration/stereo'),
@@ -82,7 +74,7 @@ def createFolderStructure(labels, home_path, colab=False):
 
         '2_Tensorflow': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow'),
         'protoc': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/protoc'),
-        'tf_models': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/models'),
+        #'tf_models': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/models'),
         'workspace': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/workspace'), 
         'training': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/workspace/training'),
         'annotations': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/workspace/training/annotations'),
@@ -142,16 +134,14 @@ def createFolderStructure(labels, home_path, colab=False):
     return files, directories
 
 
-def installBasicPackages():
+def installBasicPackages(paths):
 
     # Upgrade pip 
-    subprocess.run([sys.executable, "pip", "install", "--upgrade", "pip"])
+    subprocess.call([path_venv, "-m", "pip", "install", "--upgrade", "pip"])
 
     # all other required packages will be installed and updated by TF2 object detection API
     install('wget==3.2')
     print('Successfully checked installation of wget...')
-    # install('pyqt5==5.15.7')
-    # print('Successfully checked installation of pyqt5...')
     install('matplotlib==3.5.2')
     print('Successfully checked installation of matplotlib...')
     install('pandas==1.4.3')
@@ -162,32 +152,48 @@ def installBasicPackages():
 
 def installOpenCV():
 
-    os.system('pip uninstall opencv-python-headless -y')
-    os.system('pip uninstall opencv-python -y')
-    os.system('pip uninstall opencv-contrib-contrib-headless -y')
+    try:
+        uninstall('opencv-python')
+    except:
+        nothing = 0
+    else:
+        try:
+            uninstall('opencv-python-headless')
+        except:
+            nothing = 0
+        else:
+            try:
+                uninstall('opencv-contrib-headless')
+            except:
+                nothing = 0
+
     try:
         import cv2
         if cv2.__version__ != '4.6.0':
-            os.system('pip install opencv-contrib-python==4.6.0.66')
+            install('opencv-contrib-python==4.6.0.66')
         else:
             print('opencv-contrib-python==4.6.0.66 is installed')
     except:
-        os.system('pip install opencv-contrib-python==4.6.0.66')
+        install('opencv-contrib-python==4.6.0.66')
 
 def installAlbumentation():
-    os.system('pip install -U albumentations --no-binary qudida,albumentations')
+    subprocess.call([path_venv, "-m", "pip", "install", "-U", "albumentations", "--no-binary", "qudida", "albumentations"])
 
 def installModelGarden(paths):
     
     # Clone repository only if it does not exist already
     if os.path.exists(paths['2_Tensorflow']+'/models/research') is False:
 
-        # Clone git repo to temporary folder (because it cannot be cloned to not-empty directory)
-        print('Cloning tensorflow model garden...')
+        print('Setting up model garden...')
 
-        Repo.clone_from('https://github.com/tensorflow/models.git', paths['tf_models'])
+        # Clone model garden from github
+        #Repo.clone_from('https://github.com/tensorflow/models.git', paths['tf_models'])
 
-        print('Cloning complete...')
+        # Copy model garden from "required packages" direcory
+        #copyAllContent(paths['requiredPackages']+'/modelGarden/models', paths['2_Tensorflow']+'/models')
+        shutil.copytree(paths['requiredPackages']+'/modelGarden/models', paths['2_Tensorflow']+'/models')
+
+        print('Setting up model garden complete...')
         
     else:
         print('Model garden is already installed...')
@@ -204,17 +210,23 @@ def installProtobuf(paths):
 
         #Go to destination directory
         os.chdir(paths['protoc'])
-        print('Cloning protos...')
+        print('Setting up protos...')
 
         # Mac
         if systemName == 'Darwin':
-            protoc_url = 'https://github.com/protocolbuffers/protobuf/releases/download/v21.1/protoc-21.1-osx-aarch_64.zip'
-            wget.download(protoc_url)
+
+            # Download from github
+            # protoc_url = 'https://github.com/protocolbuffers/protobuf/releases/download/v21.1/protoc-21.1-osx-aarch_64.zip'
+            # wget.download(protoc_url)
+
+            # Copy from folder "required packages"
+            shutil.copy(paths['requiredPackages']+'/protobuf/protoc-21.1-osx-aarch_64.zip', paths['protoc'])
 
             # Extract all content of downloaded file
             with ZipFile('protoc-21.1-osx-aarch_64.zip', 'r') as zipObj:
                 zipObj.extractall()
 
+            # Add path to file to system variable
             os.environ['Path'] = paths['protoc']+'/bin'
             os.chdir(paths['research'])
 
@@ -258,7 +270,7 @@ def installProtobuf(paths):
         pyFiles = [file for file in files if ('.py' in file)]
         
         if len(protoFiles)+1 == len(pyFiles):
-            print(' Protoc was installed successfully...')
+            print(' Protoc was set up successfully...')
         else:
             print('There has been an error while installing protoc...')
             sys.exit()
@@ -274,13 +286,15 @@ def installCocoAPI(paths):
     # Clone repository only if it does not exist already
     if os.path.exists(paths['research']+'/cocoapi/README.txt') is False:
 
-        # Create temporary folder
-        os.makedirs(paths['research']+'/cocoapi')
+        print('Setting up cocoapi..')
 
-        print('Cloning cocoapi..')
-        Repo.clone_from('https://github.com/cocodataset/cocoapi.git', paths['research']+'/cocoapi')
+        # Clone from github
+        # Repo.clone_from('https://github.com/cocodataset/cocoapi.git', paths['research']+'/cocoapi')
+
+        # Copy from required packages folder
+        shutil.copytree(paths['requiredPackages']+'/coco/cocoapi', paths['research']+'/cocoapi')
         
-        print('Cloning complete...')
+        print('Setup completed...')
     else:
         print('Cocoapi is already installed...')
 
@@ -304,6 +318,7 @@ def installODAPI(paths):
 
         # Execute setup.py (this command installs all dependencies needed for tf2 odapi)
         subprocess.run(['python', '-m', 'pip', 'install', '.'])
+        # subprocess.call([path_venv, "-m", "pip", "install", "."])
 
         # Customize visualisation toolbox of TF
         mod_name = 'objectDetectionModCode.py'
@@ -311,14 +326,19 @@ def installODAPI(paths):
         source = paths['0_UserInput']+'/scripts/objectDetectionModCode.py'
 
         ##____ Changes this below
-        path_venv = os.environ['VIRTUAL_ENV']
-        dest_1 = path_venv+'/lib/python3.9/site-packages/object_detection/utils'
+        path_to_venv= system_paths['path_to_local_interpreter'].split('/')
+        index = getIndex(system_paths['name_of_virtual_environment'], path_to_venv)
+        prefix = '/'.join(path_to_venv[:index+1])
+
+        dest_1 = prefix+'/lib/python3.9/site-packages/object_detection/utils'  # Check if this really is python 3.9 or 3
         dest_2 = paths['2_Tensorflow']+'/models/research/object_detection/utils'
 
         ## ____ Stop of change
 
         # dest_1 = sys.prefix+'/lib/python3.9/site-packages/object_detection/utils'
         # dest_2 = paths['2_Tensorflow']+'/models/research/object_detection/utils'
+
+        
 
         os.remove(dest_1+'/'+file_name)
         os.remove(dest_2+'/'+file_name)
@@ -346,14 +366,14 @@ def checkODAPI(paths, colab=False):
 
     # Move to 'research' directory
     os.chdir(paths['research'])
-    import object_detection
+    # import object_detection
 
     if colab == False:
-        subprocess.run(['python', paths['research']+'/object_detection/builders/model_builder_tf2_test.py'])
+        subprocess.run([path_venv, paths['research']+'/object_detection/builders/model_builder_tf2_test.py'])
         
     else:
-        subprocess.run(['python', '-m', 'pip', 'install', 'numpy', '--upgrade']) # This had to be added for execution on colab. Problem solved using stackoverflow
-        subprocess.run(['python', paths['research']+'/object_detection/builders/model_builder_tf2_test.py'])
+        subprocess.run([path_venv, '-m', 'pip', 'install', 'numpy', '--upgrade']) # This had to be added for execution on colab. Problem solved using stackoverflow
+        subprocess.run([path_venv, paths['research']+'/object_detection/builders/model_builder_tf2_test.py'])
 
     # Move back to home directory
     os.chdir(paths['home'])
@@ -366,7 +386,7 @@ def installPackages(home_path, labels, firstInstallation=False):
         files, paths = createFolderStructure(labels, home_path, colab=False)
 
         # Install packages required for object detection (not training)
-        installBasicPackages()
+        installBasicPackages(paths)
         installAlbumentation()
         installModelGarden(paths)
         installProtobuf(paths)
