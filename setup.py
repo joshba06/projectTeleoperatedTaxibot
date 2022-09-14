@@ -14,8 +14,8 @@ installed_packages = pkg_resources.working_set
 installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
 
 import userSettings
-system_paths = userSettings.main()
-path_venv = system_paths['path_to_local_interpreter']
+userSettings = userSettings.main()
+pathVenv = userSettings['pathLocalInterpreter']
 
 def getIndex(element, array):
     for i in range(len(array)):
@@ -23,7 +23,6 @@ def getIndex(element, array):
             index = i
             break   
     return index
-
 
 def moveAllContent(source, destination):
     
@@ -36,13 +35,11 @@ def moveAllContent(source, destination):
         shutil.move(source+'/'+item, destination)
 
 
-
-
 def install(package):
-    subprocess.call([path_venv, "-m", "pip", "install", package])
+    subprocess.call([pathVenv, "-m", "pip", "install", package])
 
 def uninstall(package):
-    subprocess.check_call([path_venv, "-m", "pip", "uninstall", package, "-y"])
+    subprocess.check_call([pathVenv, "-m", "pip", "uninstall", package, "-y"])
 
 
 #%% Create folder structure
@@ -74,7 +71,6 @@ def createFolderStructure(labels, home_path, colab=False):
 
         '2_Tensorflow': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow'),
         'protoc': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/protoc'),
-        #'tf_models': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/models'),
         'workspace': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/workspace'), 
         'training': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/workspace/training'),
         'annotations': os.path.join(home_path,'2_ObjectDetection','2_Tensorflow/workspace/training/annotations'),
@@ -134,10 +130,10 @@ def createFolderStructure(labels, home_path, colab=False):
     return files, directories
 
 
-def installBasicPackages(paths):
+def installBasicPackages():
 
     # Upgrade pip 
-    subprocess.call([path_venv, "-m", "pip", "install", "--upgrade", "pip"])
+    subprocess.call([pathVenv, "-m", "pip", "install", "--upgrade", "pip"])
 
     # all other required packages will be installed and updated by TF2 object detection API
     install('wget==3.2')
@@ -152,6 +148,7 @@ def installBasicPackages(paths):
 
 def installOpenCV():
 
+    # Delete any installed version of opencv
     try:
         uninstall('opencv-python')
     except:
@@ -166,18 +163,18 @@ def installOpenCV():
                 uninstall('opencv-contrib-headless')
             except:
                 nothing = 0
+            
+            else:
+                try:
+                    uninstall('opencv-contrib-python')
+                except:
+                    nothing = 0
 
-    try:
-        import cv2
-        if cv2.__version__ != '4.6.0':
-            install('opencv-contrib-python==4.6.0.66')
-        else:
-            print('opencv-contrib-python==4.6.0.66 is installed')
-    except:
-        install('opencv-contrib-python==4.6.0.66')
+    # Re-install openCV from scratch
+    install('opencv-contrib-python==4.6.0.66')
 
 def installAlbumentation():
-    subprocess.call([path_venv, "-m", "pip", "install", "-U", "albumentations", "--no-binary", "qudida", "albumentations"])
+    subprocess.call([pathVenv, "-m", "pip", "install", "-U", "albumentations", "--no-binary", "qudida", "albumentations"])
 
 def installModelGarden(paths):
     
@@ -187,11 +184,10 @@ def installModelGarden(paths):
         print('Setting up model garden...')
 
         # Clone model garden from github
-        #Repo.clone_from('https://github.com/tensorflow/models.git', paths['tf_models'])
+        Repo.clone_from('https://github.com/tensorflow/models.git', paths['tf_models'])
 
         # Copy model garden from "required packages" direcory
-        #copyAllContent(paths['requiredPackages']+'/modelGarden/models', paths['2_Tensorflow']+'/models')
-        shutil.copytree(paths['requiredPackages']+'/modelGarden/models', paths['2_Tensorflow']+'/models')
+        # shutil.copytree(paths['requiredPackages']+'/modelGarden/models', paths['2_Tensorflow']+'/models')
 
         print('Setting up model garden complete...')
         
@@ -325,21 +321,13 @@ def installODAPI(paths):
         file_name = 'visualization_utils.py'
         source = paths['0_UserInput']+'/scripts/objectDetectionModCode.py'
 
-        ##____ Changes this below
-        path_to_venv= system_paths['path_to_local_interpreter'].split('/')
-        index = getIndex(system_paths['name_of_virtual_environment'], path_to_venv)
+        path_to_venv= userSettings['pathLocalInterpreter'].split('/')
+        index = getIndex(userSettings['nameVenv'], path_to_venv)
         prefix = '/'.join(path_to_venv[:index+1])
 
         dest_1 = prefix+'/lib/python3.9/site-packages/object_detection/utils'  # Check if this really is python 3.9 or 3
         dest_2 = paths['2_Tensorflow']+'/models/research/object_detection/utils'
-
-        ## ____ Stop of change
-
-        # dest_1 = sys.prefix+'/lib/python3.9/site-packages/object_detection/utils'
-        # dest_2 = paths['2_Tensorflow']+'/models/research/object_detection/utils'
-
         
-
         os.remove(dest_1+'/'+file_name)
         os.remove(dest_2+'/'+file_name)
         shutil.copy(source, dest_1)
@@ -369,11 +357,11 @@ def checkODAPI(paths, colab=False):
     # import object_detection
 
     if colab == False:
-        subprocess.run([path_venv, paths['research']+'/object_detection/builders/model_builder_tf2_test.py'])
+        subprocess.run([pathVenv, paths['research']+'/object_detection/builders/model_builder_tf2_test.py'])
         
     else:
-        subprocess.run([path_venv, '-m', 'pip', 'install', 'numpy', '--upgrade']) # This had to be added for execution on colab. Problem solved using stackoverflow
-        subprocess.run([path_venv, paths['research']+'/object_detection/builders/model_builder_tf2_test.py'])
+        subprocess.run([pathVenv, '-m', 'pip', 'install', 'numpy', '--upgrade']) # This had to be added for execution on colab. Problem solved using stackoverflow
+        subprocess.run([pathVenv, paths['research']+'/object_detection/builders/model_builder_tf2_test.py'])
 
     # Move back to home directory
     os.chdir(paths['home'])
@@ -383,10 +371,12 @@ def installPackages(home_path, labels, firstInstallation=False):
 
     if firstInstallation == True:
 
+        print('.\nSetting up system for the first time...\n.')
+
         files, paths = createFolderStructure(labels, home_path, colab=False)
 
         # Install packages required for object detection (not training)
-        installBasicPackages(paths)
+        installBasicPackages()
         installAlbumentation()
         installModelGarden(paths)
         installProtobuf(paths)
@@ -395,9 +385,18 @@ def installPackages(home_path, labels, firstInstallation=False):
         installOpenCV()
         checkODAPI(paths)
 
+        response = input('Continue? (y/n)')
+        
+        if response == 'y':
+            print('.\nSystem setup completed...\n.')
+        else:
+            print('Program terminated by user...')
+            sys.exit()
+
     elif firstInstallation == False:
 
+        print('.\nChecking system setup\n.')
         files, paths = createFolderStructure(labels, home_path, colab=False)
-        installOpenCV()
-        
+        print('.\nSystem setup completed...\n.')
+
     return files, paths
