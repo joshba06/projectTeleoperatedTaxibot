@@ -209,7 +209,7 @@ def draw_bounding_box_on_image(image,
               width=thickness,
               fill=color)
   try:
-    font = ImageFont.truetype('arial.ttf', 24)
+    font = ImageFont.truetype('arial.ttf', 45)
   except IOError:
     font = ImageFont.load_default()
 
@@ -1181,6 +1181,7 @@ def visualize_boxes_and_labels_on_image_array(
   box_to_keypoints_map = collections.defaultdict(list)
   box_to_keypoint_scores_map = collections.defaultdict(list)
   box_to_track_ids_map = {}
+
   if not max_boxes_to_draw:
     max_boxes_to_draw = boxes.shape[0]
   for i in range(boxes.shape[0]):
@@ -1188,6 +1189,7 @@ def visualize_boxes_and_labels_on_image_array(
       break
     if scores is None or scores[i] > min_score_thresh:
       box = tuple(boxes[i].tolist())
+
       if instance_masks is not None:
         box_to_instance_masks_map[box] = instance_masks[i]
       if instance_boundaries is not None:
@@ -1206,6 +1208,7 @@ def visualize_boxes_and_labels_on_image_array(
           if not agnostic_mode:
             if classes[i] in six.viewkeys(category_index):
               class_name = category_index[classes[i]]['name']
+
             else:
               class_name = 'N/A'
             display_str = str(class_name)
@@ -1230,6 +1233,8 @@ def visualize_boxes_and_labels_on_image_array(
           box_to_color_map[box] = STANDARD_COLORS[
               classes[i] % len(STANDARD_COLORS)]
   
+  # Niklas
+  aryFound = {}
 
   # Draw all boxes onto image.
   for box, color in box_to_color_map.items():
@@ -1258,6 +1263,7 @@ def visualize_boxes_and_labels_on_image_array(
         color=color,
         thickness=0 if skip_boxes else line_thickness,
         display_str_list=box_to_display_str_map[box],
+        #display_str_list=box_to_display_str_map[box],
         use_normalized_coordinates=use_normalized_coordinates)
     if keypoints is not None:
       keypoint_scores_for_box = None
@@ -1274,18 +1280,20 @@ def visualize_boxes_and_labels_on_image_array(
           keypoint_edges=keypoint_edges,
           keypoint_edge_color=color,
           keypoint_edge_width=line_thickness // 2)
-  try:
-    aryfound = {
-      'class': class_name,
-      'xmin':xmin,
-      'xmax':xmax,
-      'ymin':ymin,
-      'ymax':ymax,
-    }
-  except: 
-    aryfound = 0
+    try:
+      params = [xmin, xmax, ymin, ymax]
+      aryFound[box_to_display_str_map[box][0]] = params.copy()
+    except:
+      nothing = 0
 
-  return image, aryfound
+  # Before returning check if aryFound is zero to avoid program crash
+  keys = aryFound.keys()
+  if len(keys) == 0:
+    aryFound = 0
+  #else:
+    #print(aryFound)
+
+  return image, aryFound
 
 
 def add_cdf_image_summary(values, name):
