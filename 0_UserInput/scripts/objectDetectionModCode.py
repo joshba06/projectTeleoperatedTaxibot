@@ -1282,7 +1282,6 @@ def visualize_boxes_and_labels_on_image_array(
       'ymin':ymin,
       'ymax':ymax,
     }
-    print('Found object of class "'+class_name+'"')
   except: 
     aryfound = 0
 
