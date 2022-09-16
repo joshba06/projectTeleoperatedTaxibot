@@ -3,7 +3,6 @@ import os
 import shutil
 import platform
 from pprint import pprint
-from git import Repo
 import subprocess
 import sys
 import wget
@@ -184,7 +183,8 @@ def installModelGarden(paths):
         print('Setting up model garden...')
 
         # Clone model garden from github
-        Repo.clone_from('https://github.com/tensorflow/models.git', paths['tf_models'])
+        from git import Repo
+        Repo.clone_from('https://github.com/tensorflow/models.git', paths['2_Tensorflow']+'/models')
 
         # Copy model garden from "required packages" direcory
         # shutil.copytree(paths['requiredPackages']+'/modelGarden/models', paths['2_Tensorflow']+'/models')
@@ -285,6 +285,7 @@ def installCocoAPI(paths):
         print('Setting up cocoapi..')
 
         # Clone from github
+        # from git import Repo
         # Repo.clone_from('https://github.com/cocodataset/cocoapi.git', paths['research']+'/cocoapi')
 
         # Copy from required packages folder
