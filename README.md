@@ -1,42 +1,28 @@
-# Configuration and usage
+# Setup information
 
-## Information for first installation
+1. Create a new folder
 
-### 1. Navigate to a new folder
+2. Create new virtual environment inside this folder
+```python3 -m venv 'nameOfVirtualEnvironment'```
 
-### 2. Create new virtual environment
-python3 -m venv 'name of virtual environment'
+3. Activate virtual environment 
+```source 'nameOfVirtualEnvironment'/bin/activate```
 
-### 3. Activate virtual environment 
-source 'name of virtual environment'/bin/activate
+4. Upgrade pip and install jupyter kernel in virtual environment
+```python -m pip install --upgrade pip```
+```pip install ipykernel```
+```python3 -m ipykernel install --user --name='nameOfVirtualEnvironment'```
 
-### 4. Install local python version and kernel in virtual environment
-python -m pip install --upgrade pip
-pip install ipykernel
-python3 -m ipykernel install --user --name='name of virtual environment'
+5. Clone this repository from github
+```git clone https://github.com/joshba06/projectTeleoperatedTaxibot.git```
 
-### 5. Clone repository from github
-git clone https://github.com/joshba06/Object_Detection.git
+6. Update paths in userSettings.py
 
+7. Install wget
+macOS: install homebrew, then wget
 
-## Workflow
-### 1. Navigate to the folder containing name of virtual env and "Object_Detection"
-
-### 2. Activate virtual environment
-source 'name of virtual environment'/bin/activate
-
-### 3. Work on files / edit etc. Then add, commit and push
-git add .
-git commit -m 'Some meaningful change'
-git push
-
-### 4. If you want to download the latest version of the repository from github
-git fetch origin
-git reset --hard "COMMIT NUMBER"
-
-# Then close the file and reopen it and the changes will be restored to the online file
-
-
+8. Install packages
+```python3 main.py --initialInstallation True```
 
 
 
