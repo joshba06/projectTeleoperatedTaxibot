@@ -14,12 +14,17 @@ numImgsGenerateStereo = 20
 calibration_criteria = (cv.TERM_CRITERIA_EPS+cv.TERM_CRITERIA_MAX_ITER, 100, 1e-06)
 winSize = (11,11)
 squareSize = 2.2 #cm
-boardSize = (6,9)
+boardSize = (9,6)
 
 font = cv.FONT_HERSHEY_PLAIN
 fontScale = 2
 
 #%% Sub functions
+
+def listdirVisible(path):
+    items = os.listdir(path)
+    visible = [item for item in items if not item.startswith('.')]
+    return visible
 
 def generateImgsSingle(capture, camPosition, pathImgs):
         
@@ -327,9 +332,6 @@ def generateImagesStereo(capL, capR, path_cam_L, path_cam_R):
     
     print('.\nFinished image generation for stereo\n.')
 
-    ''' 
-    Add the same flags as for generation single!!!
-    '''
 
 
 def checkArray(array_indices, variable, lsHistory):
@@ -543,9 +545,7 @@ def loadImgsandImgPoints(mode, pathImgsL, pathImgsR):
     if (mode == 'Single') and (pathImgsL is not None):
 
         # Remove unwanted files from array
-        paths_images = os.listdir(pathImgsL)
-        if ".DS_Store" in paths_images: 
-            paths_images.remove('.DS_Store')
+        paths_images = listdirVisible(pathImgsL)
 
         # Compute image points for all images in directory
         for path in paths_images:
@@ -576,9 +576,7 @@ def loadImgsandImgPoints(mode, pathImgsL, pathImgsR):
     elif (mode == 'Single') and (pathImgsR is not None):
        
        # Remove unwanted files from directory
-        paths_images = os.listdir(pathImgsR)
-        if ".DS_Store" in paths_images: 
-            paths_images.remove('.DS_Store')
+        paths_images = listdirVisible(pathImgsR)
         
         for path in paths_images:
 
@@ -601,15 +599,11 @@ def loadImgsandImgPoints(mode, pathImgsL, pathImgsR):
     elif mode == 'Stereo':
 
         # Remove unwanted files from directory
-        paths_images_L = os.listdir(pathImgsL)
-        if ".DS_Store" in paths_images_L: 
-            paths_images_L.remove('.DS_Store')
-
-        paths_images_R = os.listdir(pathImgsR)
-        if ".DS_Store" in paths_images_R: 
-            paths_images_R.remove('.DS_Store')
+        paths_images_L = listdirVisible(pathImgsL)
+        paths_images_R = listdirVisible(pathImgsR)        
     
         for pathL in paths_images_L:
+            
 
             # Get left image and find path to the same image for right camera
             pathR = pathL.split('_')[0]+'_R.png'
@@ -878,6 +872,13 @@ def calibrateSingle(camPosition, lsBestCombination, path_calibration, squareSize
     cameraMatrixTemplate = np.zeros((3, 3))
     distCoefficientsTemplate = np.zeros((5, 1))
 
+    # Niklas
+
+    rotationMatTemplate = [np.zeros((1, 1, 3)) for i in range(len(imgPaths))]
+    translationVecTemplate = [np.zeros((1, 1, 3)) for i in range(len(imgPaths))]
+
+    # Niklas
+
     # Calibrate camera
     _, cameraMatrix, distortionCoefficients, rotationR, translationT = \
         cv.calibrateCamera(
@@ -886,6 +887,8 @@ def calibrateSingle(camPosition, lsBestCombination, path_calibration, squareSize
             imgSize,
             cameraMatrixTemplate,
             distCoefficientsTemplate,
+            rotationMatTemplate,
+            translationVecTemplate,
             flags = 0,
             criteria = calibration_criteria,
         )
@@ -970,8 +973,7 @@ def calibrateStereo(lsBestCombinationtereo, paths, newCameraMatrixL, distortionC
 
 
     # Calibrate stereo
-    flags = 0
-    flags |= cv.CALIB_FIX_INTRINSIC
+    flags = cv.CALIB_FIX_INTRINSIC
 
     _, _, _, _, _, stereoRotation, stereoTranslation, _, _ = cv.stereoCalibrate(objectPoints, imagePointsL, imagePointsR, newCameraMatrixL, distortionCoefficientsL, newCameraMatrixR, distortionCoefficientsR, imgSize, calibration_criteria, flags)
 
@@ -1031,7 +1033,8 @@ def getIntrinsicsLeftCamera(capture, paths, singleLGenImages, singleLTestCombina
             np.save('distortionCoefficientsL', distortionCoefficientsL)
             np.save('cameraMatrixL', cameraMatrixL)
             np.save('newcameraMatrixL', newCameraMatrixL)
-            print('Camera L intrinsics: fx={fx:.2f}px, fy={fy:.2f}px, cx={cx:.2f}px, cy={cy:.2f}px'.format(fx=newCameraMatrixL[0][0], fy=newCameraMatrixL[1][1], cx=newCameraMatrixL[0][2], cy=newCameraMatrixL[1][2]))
+            # Changed below from newCam to cam
+            print('Camera L intrinsics: fx={fx:.2f}px, fy={fy:.2f}px, cx={cx:.2f}px, cy={cy:.2f}px'.format(fx=cameraMatrixL[0][0], fy=cameraMatrixL[1][1], cx=newCameraMatrixL[0][2], cy=newCameraMatrixL[1][2]))
             print('Camera L distortion coefficients: k1={:.5f}, k2={:.5f}, p1={:.5f}, p2={:.5f}, k3={:.5f} '.format(distortionCoefficientsL[0][0], distortionCoefficientsL[1][0], distortionCoefficientsL[2][0], distortionCoefficientsL[3][0], distortionCoefficientsL[4][0]))
             print('CameraMatrixL, distortionCoefficientsL and newCameraMatrixL computed and saved to file...')
 
@@ -1046,7 +1049,7 @@ def getIntrinsicsLeftCamera(capture, paths, singleLGenImages, singleLTestCombina
             else:   
                 print('Camera L intrinsics: fx={fx:.2f}px, fy={fy:.2f}px, cx={cx:.2f}px, cy={cy:.2f}px'.format(fx=newCameraMatrixL[0][0], fy=newCameraMatrixL[1][1], cx=newCameraMatrixL[0][2], cy=newCameraMatrixL[1][2]))
                 print('Camera L distortion coefficients: k1={:.5f}, k2={:.5f}, p1={:.5f}, p2={:.5f}, k3={:.5f} '.format(distortionCoefficientsL[0][0], distortionCoefficientsL[1][0], distortionCoefficientsL[2][0], distortionCoefficientsL[3][0], distortionCoefficientsL[4][0]))
-    
+
     # Try to run debugging mode
     if debuggingMode is True: #Works
         print('Starting debugging for camera L')
@@ -1106,6 +1109,7 @@ def getIntrinsicsRightCamera(capture, paths, singleRGenImages, singleRTestCombin
             np.save('distortionCoefficientsR', distortionCoefficientsR)
             np.save('cameraMatrixR', cameraMatrixR)
             np.save('newcameraMatrixR', newCameraMatrixR)
+
             print('Camera R intrinsics: fx={fx:.2f}px, fy={fy:.2f}px, cx={cx:.2f}px, cy={cy:.2f}px'.format(fx=newCameraMatrixR[0][0], fy=newCameraMatrixR[1][1], cx=newCameraMatrixR[0][2], cy=newCameraMatrixR[1][2]))
             print('Camera R distortion coefficients: k1={:.5f}, k2={:.5f}, p1={:.5f}, p2={:.5f}, k3={:.5f} '.format(distortionCoefficientsR[0][0], distortionCoefficientsR[1][0], distortionCoefficientsR[2][0], distortionCoefficientsR[3][0], distortionCoefficientsR[4][0]))
             print('CameraMatrix, distortionCoefficients and newCameraMatrix computed and saved to file...')
@@ -1177,18 +1181,18 @@ def calibrateStereoSetup(capL, capR, paths, stereoGenImages, stereoTestCombinati
             # Load intrinsics from file
             newCameraMatrixL = np.load(paths['individual']+'/newCameraMatrixL.npy')
             distortionCoefficientsL = np.load(paths['individual']+'/distortionCoefficientsL.npy')
-            newCameraMatrixR = np.load(paths['individual']+'/newCameraMatrixR.npy')
+            newCameraMatrixR = np.load(paths['individual']+'/newCameraMatrixR.npy') 
             distortionCoefficientsR = np.load(paths['individual']+'/distortionCoefficientsR.npy')
-            stereoTranslation = np.load(paths['stereo']+'/translationVector.npy')
+
         
         except: 
             print('Failed to load best image combination or camera intrinsics. Please restart calibration')
 
         else: 
             # Compute stereo parameters
-
             calibrateStereo(lsBestCombination, paths, newCameraMatrixL, distortionCoefficientsL, newCameraMatrixR, distortionCoefficientsR)
-            print('Translation from camera R to camera L: x={:.2f}cm, y={:.2f}cm, z={:.2f}cm'.format(stereoTranslation[0][0], stereoTranslation[1][0], stereoTranslation[2][0]))
+            stereoTranslation = np.load(paths['stereo']+'/translationVector.npy')
+            print('Translation from camera R to camera L: x={:.5f}cm, y={:.5f}cm, z={:.5f}cm'.format(stereoTranslation[0][0], stereoTranslation[1][0], stereoTranslation[2][0]))
    
     else:
         print('Attempting to load stereo parameters from file..')
@@ -1438,12 +1442,13 @@ def initialiseCorrespondence():
         maxDisparity = 272
         numDisparities = maxDisparity-minDisparity
         blockSize = 5
-        disp12MaxDiff = 5
-        uniquenessRatio = 15
+        #disp12MaxDiff = 5
+        #uniquenessRatio = 15
 
-        left_matcher = cv.StereoSGBM_create(minDisparity = minDisparity,numDisparities = numDisparities,blockSize = blockSize,disp12MaxDiff = disp12MaxDiff, uniquenessRatio = uniquenessRatio)
+        left_matcher = cv.StereoSGBM_create(minDisparity = minDisparity,numDisparities = numDisparities,blockSize = blockSize)
     
         # left_matcher = cv.StereoBM_create(numDisparities = numDisparities, blockSize=blockSize)
+        # left_matcher.setMinDisparity(minDisparity)
         sigma = 1.5
         lmbda = 8000.0
 
@@ -1454,102 +1459,19 @@ def initialiseCorrespondence():
 
         return left_matcher, right_matcher, wls_filter
 
-def getDepth(Left_rectified, Right_rectified, Q, debuggingMode, left_matcher, right_matcher, wls_filter):
+def getDepth(Left_rectified, Right_rectified, Q, left_matcher, right_matcher, wls_filter):
 
 
-    Left_rectified_gray = cv.cvtColor(Left_rectified,cv.COLOR_BGR2GRAY)
-    Right_rectified_gray = cv.cvtColor(Right_rectified,cv.COLOR_BGR2GRAY)
+    # Left_rectified = cv.cvtColor(Left_rectified,cv.COLOR_BGR2GRAY)
+    # Right_rectified = cv.cvtColor(Right_rectified,cv.COLOR_BGR2GRAY)
 
-    if debuggingMode == True:
+    left_dispBM = left_matcher.compute(Left_rectified, Right_rectified).astype(np.float32) / 16
+    right_dispBM = right_matcher.compute(Right_rectified,Left_rectified).astype(np.float32) / 16
+    filtered_dispBM = wls_filter.filter(left_dispBM, Left_rectified, disparity_map_right=right_dispBM)
 
-        win_left_dispSGBM = 'Left disparity map - StereoSGBM'
-        win_filtered_dispSGBM = 'Filtered left disparity map - StereoSGBM'
-        cv.namedWindow(win_left_dispSGBM)
-        cv.namedWindow(win_filtered_dispSGBM)
-
-        font = cv.FONT_HERSHEY_PLAIN
-        fontScale = 2
-
-        print('____________Checking left disparity map & reprojected depth____________')
-        left_disp = left_matcher.compute(Left_rectified_gray, Right_rectified_gray).astype(np.float32) / 16
-        print('Data type: '+str(left_disp.dtype))
-        print('Shape: '+str(left_disp.shape))
-
-        points_3D_LM = cv.reprojectImageTo3D(left_disp, Q)
-
-        print('____________Checking filtered disparity map & reprojected depth____________')
-        right_disp = right_matcher.compute(Right_rectified_gray,Left_rectified_gray).astype(np.float32) / 16
-        filtered_disp = wls_filter.filter(left_disp, Left_rectified_gray, disparity_map_right=right_disp)
-        print('Data type: '+str(filtered_disp.dtype))
-        print('Shape: '+str(filtered_disp.shape))
-
-        points_3D_FM = cv.reprojectImageTo3D(filtered_disp, Q)
-
-        def printCoordinatesdispLM(event, x, y, flags, param):
-            if event == cv.EVENT_LBUTTONDOWN:
-                dispLM = left_disp[y][x]
-
-                depthLM = points_3D_LM[y][x][2]
-
-                text = ('Disparity: {:.2f}px, depth: {:.2f}cm'.format(dispLM, depthLM))
-                cv.putText(left_disp_forVis, text, (x, y), font, fontScale, (0, 255, 255), 2, cv.LINE_AA)
-
-        def printCoordinatesdispFM(event, x, y, flags, param):
-            if event == cv.EVENT_LBUTTONDOWN:
-
-                dispFM = filtered_disp[y][x]
-
-                depthFM = points_3D_FM[y][x][2]
-
-                text = ('Disparity: {:.2f}px, depth: {:.2f}cm'.format(dispFM, depthFM))
-                cv.putText(filtered_disp_forVis, text, (x, y), font, fontScale, (0, 255, 255), 2, cv.LINE_AA)
-
-        cv.setMouseCallback(win_left_dispSGBM, printCoordinatesdispLM)
-        cv.setMouseCallback(win_filtered_dispSGBM, printCoordinatesdispFM)
-        
-        vis_right = right_matcher.compute(Right_rectified_gray,Left_rectified_gray)
-        vis_left = left_matcher.compute(Left_rectified_gray, Right_rectified_gray)
-        filtered_disp_forVis = wls_filter.filter(vis_left, Left_rectified_gray, disparity_map_right=vis_right)
-
-        dispForColor = filtered_disp.copy()
-        dispForColor = cv.normalize(src=dispForColor, dst=dispForColor, alpha=255, beta=0 , norm_type=cv.NORM_MINMAX)
-        disp8 = np.uint8(dispForColor)
-
-        colored = cv.applyColorMap(disp8, cv.COLORMAP_JET)
-
-        left_disp_forVis = left_matcher.compute(Left_rectified_gray, Right_rectified_gray)
-
-        # Proof that coordinates in left rectified and leftdisp are the same
-        # for n in range(len(imagePointsL[0])):
-        #     x=int(round(imagePointsL[0][n][0][0]))
-        #     y=int(round(imagePointsL[0][n][0][1]))
-        #     cv.circle(left_disp_forVis, (x,y), 5, (0,0,0), -1)
+    points_3DBM_filtered = cv.reprojectImageTo3D(filtered_dispBM, Q)
 
 
-        while True:
-
-            key = cv.waitKey(25)
-
-            if key == 27:
-                print('Program was terminated by user..')
-                break
-
-            cv.imshow(win_left_dispSGBM, left_disp_forVis)
-            cv.imshow(win_filtered_dispSGBM, filtered_disp_forVis)
-            cv.imshow('Coloured Disparity', colored)
-
-        cv.destroyAllWindows()
-    else:
-        #print('Computing filtered disparity map with Stereo SGBM')
-        left_disp = left_matcher.compute(Left_rectified_gray, Right_rectified_gray).astype(np.float32) / 16
-        right_disp = right_matcher.compute(Right_rectified_gray,Left_rectified_gray).astype(np.float32) / 16
-        filtered_disp = wls_filter.filter(left_disp, Left_rectified_gray, disparity_map_right=right_disp)
-        points_3D = cv.reprojectImageTo3D(filtered_disp, Q)
-
-        dispForColor = filtered_disp.copy()
-        dispForColor = cv.normalize(src=dispForColor, dst=dispForColor, alpha=255, beta=0 , norm_type=cv.NORM_MINMAX)
-        disp8 = np.uint8(dispForColor)
-        colored_disp = cv.applyColorMap(disp8, cv.COLORMAP_JET)
 
 
-    return points_3D, colored_disp
+    return points_3DBM_filtered, filtered_dispBM
