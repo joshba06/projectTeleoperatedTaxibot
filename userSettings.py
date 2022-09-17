@@ -1,8 +1,8 @@
 
 settings = {
-                'nameVenv' : 'Niklas',
-                'pathLocalInterpreter' : '/Users/niklas/Virtual_Environment/Version_6/Niklas/bin/python3',
-                'homePath' : '/Users/niklas/Virtual_Environment/Version_6/projectTeleoperatedTaxibot',
+                'nameVenv' : 'envTeleTaxi',
+                'pathLocalInterpreter' : '/Volumes/Niklas/macOS/BachelorNB/envTeleTaxi/bin/python3',
+                'homePath' : '/Volumes/Niklas/macOS/BachelorNB/projectTeleoperatedTaxibot',
                 'labels': ['Engine'],
                 'pretrainedModelName': 'my_ssd_mobilenet_v2_fpnlite'
 

@@ -5,7 +5,6 @@ import platform
 from pprint import pprint
 import subprocess
 import sys
-import wget
 from zipfile import ZipFile
 
 import pkg_resources
@@ -42,7 +41,7 @@ def uninstall(package):
 
 
 #%% Create folder structure
-def createFolderStructure(labels, home_path, colab=False):
+def createFolderStructure(labels, home_path):
 
     # Create dictionary with paths to most used directories
     directories = {
@@ -349,20 +348,14 @@ def installODAPI(paths):
     os.chdir(paths['home'])
 
 
-def checkODAPI(paths, colab=False):
+def checkODAPI(paths):
 
     print('Checking installation of TF2 object detection API...')
 
     # Move to 'research' directory
     os.chdir(paths['research'])
-    # import object_detection
 
-    if colab == False:
-        subprocess.run([pathVenv, paths['research']+'/object_detection/builders/model_builder_tf2_test.py'])
-        
-    else:
-        subprocess.run([pathVenv, '-m', 'pip', 'install', 'numpy', '--upgrade']) # This had to be added for execution on colab. Problem solved using stackoverflow
-        subprocess.run([pathVenv, paths['research']+'/object_detection/builders/model_builder_tf2_test.py'])
+    subprocess.run([pathVenv, paths['research']+'/object_detection/builders/model_builder_tf2_test.py'])
 
     # Move back to home directory
     os.chdir(paths['home'])
@@ -374,7 +367,7 @@ def installPackages(home_path, labels, firstInstallation=False):
 
         print('.\nSetting up system for the first time...\n.')
 
-        files, paths = createFolderStructure(labels, home_path, colab=False)
+        files, paths = createFolderStructure(labels, home_path)
 
         # Install packages required for object detection (not training)
         installBasicPackages()
@@ -397,7 +390,7 @@ def installPackages(home_path, labels, firstInstallation=False):
     elif firstInstallation == False:
 
         print('.\nChecking system setup\n.')
-        files, paths = createFolderStructure(labels, home_path, colab=False)
+        files, paths = createFolderStructure(labels, home_path)
         print('.\nSystem setup completed...\n.')
 
     return files, paths
