@@ -24,6 +24,9 @@ macOS: install homebrew, then wget
 8. Install packages
 ```python3 main.py --initialInstallation True```
 
+# Sources
+https://tensorflow-object-detection-api-tutorial.readthedocs.io/en/latest/training.html#training-the-model
+https://github.com/nicknochnack/TFODCourse
 
 
 
