@@ -263,12 +263,12 @@ category_index = label_map_util.create_category_index_from_labelmap(path_labelma
 print('\n________________4. Starting Taxibot livestream________________\n')
 
 # Initiate correspondence algorithms
-# left_matcher, right_matcher, wls_filter = cameraSetup.initialiseCorrespondence()
+left_matcher, right_matcher, wls_filter = cameraSetup.initialiseCorrespondence() 
 
 new_frame_time = 0
 prev_frame_time = 0
 while True:
-    key = cv.waitKey(1)
+    key = cv.waitKey(25)
 
     isTrueL, frameL = capL.read()
     isTrueR, frameR = capR.read()
@@ -281,15 +281,8 @@ while True:
     if key == 27:
         print('Program was terminated by user..')
         sys.exit()
-    
-    elif key == ord(' '):
-        cv.imwrite(paths['3_Output']+'/camL.png',Left_rectified)
 
-
-
-
-
-    #points_3D, colored_disp = cameraSetup.getDepth(Left_rectified, Right_rectified, Q, debuggingMode, left_matcher, right_matcher, wls_filter)
+    points_3D, disparityMap = cameraSetup.getDepth(Left_rectified, Right_rectified, Q, debuggingMode, left_matcher, right_matcher, wls_filter)
 
     # Detect object on left rectified camera stream
     image_np = np.array(Left_rectified)
@@ -305,16 +298,17 @@ while True:
     image_np_with_detections = image_np.copy()
 
     image_np_with_detections, aryFound = viz_utils.visualize_boxes_and_labels_on_image_array(
-                image_np_with_detections,
-                detections['detection_boxes'],
-                detections['detection_classes']+label_id_offset,
-                detections['detection_scores'],
-                category_index,
-                use_normalized_coordinates=True,
-                max_boxes_to_draw=2,
-                min_score_thresh=.8,
-                agnostic_mode=False)
+            image_np_with_detections,
+            detections['detection_boxes'],
+            detections['detection_classes']+label_id_offset,
+            detections['detection_scores'],
+            category_index,
+            use_normalized_coordinates=True,
+            max_boxes_to_draw=2,
+            min_score_thresh=.8,
+            agnostic_mode=False)
 
+    # If an object is found, get its/their image coordinates and compute depth
     if aryFound != 0:
 
         keys = aryFound.keys()
@@ -334,31 +328,29 @@ while True:
             x_centre = int(x_centre)
             y_centre = ymin+0.5*(ymax-ymin)
             y_centre = int(y_centre)
+            
 
             # Mark point
             cv.putText(image_np_with_detections, 'x', (x_centre, y_centre), cv.FONT_HERSHEY_PLAIN, 2, (0, 255, 255), 2, cv.LINE_AA)
+            depthPCL = points_3D[y_centre][x_centre][2]
+
+            # Depth via PCL
+            depth_text_PCL = ('Engine at: Z = {:.2f}cm'.format(depthPCL))
+            cv.putText(image_np_with_detections, depth_text_PCL, (x_centre-15, y_centre+20), cv.FONT_HERSHEY_PLAIN, 2, (0, 255, 255), 2, cv.LINE_AA)
 
 
-    #     # Depth via PCL
-        #depthPCL = points_3D[y_centreL][x_centreL][2]
-        #depth_text_PCL = ('Depth from PCL: z = {:.2f}cm'.format(depthPCL))
 
-
-        #cv.putText(image_np_with_detectionsL, depth_text_PCL, (x_centreL, y_centreL), cv.FONT_HERSHEY_PLAIN, 2, (0, 255, 255), 2, cv.LINE_AA)
-    
-    cv.imshow('Camera Left - Detection Mode', image_np_with_detections)
-    #cv.imshow('Disparity', colored_disp)
-
-
+    # Add frame rate to display
     new_frame_time = time.time()
     fps = 1/(new_frame_time-prev_frame_time)
     prev_frame_time = new_frame_time
     fps = int(fps)
     fps = ('FPS: {:.2f}'.format(fps))
     cv.putText(image_np_with_detections, fps, (7, 70), cv.FONT_HERSHEY_PLAIN, 3, (100, 255, 0), 1, cv.LINE_AA)
+    
+    cv.imshow('Camera Left - Detection Mode', image_np_with_detections)
+    cv.imshow('Disparity map', disparityMap)
 
-
- 
 cv.destroyAllWindows()
 
 
