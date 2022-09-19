@@ -221,21 +221,25 @@ from object_detection.builders import model_builder
 from object_detection.utils import config_util
 print('Finished importing modules')
 os.chdir(paths['home'])
+def listdirVisible(path):
+    items = os.listdir(path)
+    visible = [item for item in items if not item.startswith('.')]
+    return visible
 
 # Determine latest checkpoint
 path_model = paths['trainedModels']+'/'+userSettings['pretrainedModelName']
-files = os.listdir(path_model)
+files = listdirVisible(path_model)
 last_checkpoint = 0
 for file in files:
-    ckpt = file.split('.')[0]
-    try:
-        ckpt = ckpt.split('-')[1]
-    except:
-        break
-    else:
-        #print('Current checkpoint: '+ckpt)
-        if (int(ckpt) > last_checkpoint):
-            last_checkpoint = int(ckpt)
+    if file.startswith('ckpt'):
+        try:
+            ckpt = file.split('.')[0]
+            ckpt = ckpt.split('-')[1]
+        except:
+            break
+        else:
+            if (int(ckpt) > last_checkpoint):
+                last_checkpoint = int(ckpt)
 last_checkpoint = 'ckpt-'+str(last_checkpoint)
 print('Found latest checkpoint: '+last_checkpoint)
 
