@@ -282,7 +282,7 @@ while True:
         print('Program was terminated by user..')
         sys.exit()
 
-    points_3D, disparityMap = cameraSetup.getDepth(Left_rectified, Right_rectified, Q, debuggingMode, left_matcher, right_matcher, wls_filter)
+    points_3D = cameraSetup.getDepth(Left_rectified, Right_rectified, Q, left_matcher, right_matcher, wls_filter)
 
     # Detect object on left rectified camera stream
     image_np = np.array(Left_rectified)
@@ -344,12 +344,10 @@ while True:
     new_frame_time = time.time()
     fps = 1/(new_frame_time-prev_frame_time)
     prev_frame_time = new_frame_time
-    fps = int(fps)
-    fps = ('FPS: {:.2f}'.format(fps))
+    fps = ('FPS: {:.3f}'.format(fps))
     cv.putText(image_np_with_detections, fps, (7, 70), cv.FONT_HERSHEY_PLAIN, 3, (100, 255, 0), 1, cv.LINE_AA)
     
     cv.imshow('Camera Left - Detection Mode', image_np_with_detections)
-    cv.imshow('Disparity map', disparityMap)
 
 cv.destroyAllWindows()
 
