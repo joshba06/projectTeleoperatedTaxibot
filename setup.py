@@ -237,7 +237,7 @@ def installProtobuf(paths):
             with ZipFile('protoc-21.5-win64.zip', 'r') as zipObj:
                 zipObj.extractall()
 
-            os.environ['Path'] = paths['protoc']+'/bin'
+            os.environ['PATH'] += os.pathsep + os.path.abspath(os.path.join(paths['protoc'], 'bin'))   
             os.chdir(paths['research'])
 
             os.system('for /f %i in ("dir /b object_detection\protos\*.proto") do protoc object_detection\protos\%i --python_out=.')
