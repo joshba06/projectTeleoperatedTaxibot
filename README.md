@@ -25,6 +25,7 @@ macOS: install homebrew, then wget
 ```python3 main.py --initialInstallation True```
 
 # Sources
+https://github.com/oreillymedia/Learning-OpenCV-3_examples
 https://tensorflow-object-detection-api-tutorial.readthedocs.io/en/latest/training.html#training-the-model
 https://github.com/nicknochnack/TFODCourse
 
