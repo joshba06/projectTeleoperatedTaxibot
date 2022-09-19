@@ -241,9 +241,6 @@ def installProtobuf(paths):
             os.chdir(paths['research'])
 
             os.system('for /f %i in ("dir /b object_detection\protos\*.proto") do protoc object_detection\protos\%i --python_out=.')
-                
-        else:
-            pass
 
 
         files = os.listdir(paths['research']+'/object_detection/protos')
