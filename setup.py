@@ -227,23 +227,9 @@ def installProtobuf(paths):
 
             os.system('protoc object_detection/protos/*.proto --python_out=.')
 
-        # Linux
-        elif systemName == 'Linux':
-            protoc_url = 'https://github.com/protocolbuffers/protobuf/releases/download/v21.5/protoc-21.5-linux-x86_64.zip'
-            wget.download(protoc_url)
-
-            # Extract all content of downloaded file
-            with ZipFile('protoc-21.5-linux-x86_64.zip', 'r') as zipObj:
-                zipObj.extractall()
-
-            os.environ['Path'] = paths['protoc']+'/bin'
-            os.chdir(paths['research'])
-
-            os.system('protoc object_detection/protos/*.proto --python_out=.')
-
-
         # Windows
         elif systemName == 'Windows':
+            import wget
             protoc_url = 'https://github.com/protocolbuffers/protobuf/releases/download/v21.5/protoc-21.5-win64.zip'
             wget.download(protoc_url)
 
