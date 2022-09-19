@@ -14,7 +14,7 @@ numImgsGenerateStereo = 20
 calibration_criteria = (cv.TERM_CRITERIA_EPS+cv.TERM_CRITERIA_MAX_ITER, 100, 1e-06)
 winSize = (11,11)
 squareSize = 2.2 #cm
-boardSize = (9,6)
+boardSize = (6,9)
 
 font = cv.FONT_HERSHEY_PLAIN
 fontScale = 2
@@ -1005,10 +1005,10 @@ def calibrateStereo(lsBestCombinationtereo, paths, newCameraMatrixL, distortionC
 
 def getIntrinsicsLeftCamera(capture, paths, singleLGenImages, singleLTestCombinations, singleLCalibration, debuggingMode):
     
-    if singleLGenImages is True: #Works
+    if singleLGenImages is True: 
         generateImgsSingle(capture, 'L', paths['indCamL'])
 
-    elif singleLTestCombinations is True: #Works
+    elif singleLTestCombinations is True: 
     
         print('Computing best image combination for camera L')
         # Create a dictionary with paths to all images and their respective image points 
@@ -1017,7 +1017,7 @@ def getIntrinsicsLeftCamera(capture, paths, singleLGenImages, singleLTestCombina
         # Find best combination for all images
         lsBestCombination = testAllImgCombinations('Single', dict_pathsPoints, 'L', paths['individual'])
 
-    elif singleLCalibration == True: # Works
+    elif singleLCalibration == True: 
 
         # Load list with best combination from file
         try:
@@ -1034,7 +1034,7 @@ def getIntrinsicsLeftCamera(capture, paths, singleLGenImages, singleLTestCombina
             np.save('cameraMatrixL', cameraMatrixL)
             np.save('newcameraMatrixL', newCameraMatrixL)
             # Changed below from newCam to cam
-            print('Camera L intrinsics: fx={fx:.2f}px, fy={fy:.2f}px, cx={cx:.2f}px, cy={cy:.2f}px'.format(fx=cameraMatrixL[0][0], fy=cameraMatrixL[1][1], cx=newCameraMatrixL[0][2], cy=newCameraMatrixL[1][2]))
+            print('Camera L intrinsics: fx={fx:.2f}px, fy={fy:.2f}px, cx={cx:.2f}px, cy={cy:.2f}px'.format(fx=newCameraMatrixL[0][0], fy=newCameraMatrixL[1][1], cx=newCameraMatrixL[0][2], cy=newCameraMatrixL[1][2]))
             print('Camera L distortion coefficients: k1={:.5f}, k2={:.5f}, p1={:.5f}, p2={:.5f}, k3={:.5f} '.format(distortionCoefficientsL[0][0], distortionCoefficientsL[1][0], distortionCoefficientsL[2][0], distortionCoefficientsL[3][0], distortionCoefficientsL[4][0]))
             print('CameraMatrixL, distortionCoefficientsL and newCameraMatrixL computed and saved to file...')
 
@@ -1051,7 +1051,7 @@ def getIntrinsicsLeftCamera(capture, paths, singleLGenImages, singleLTestCombina
                 print('Camera L distortion coefficients: k1={:.5f}, k2={:.5f}, p1={:.5f}, p2={:.5f}, k3={:.5f} '.format(distortionCoefficientsL[0][0], distortionCoefficientsL[1][0], distortionCoefficientsL[2][0], distortionCoefficientsL[3][0], distortionCoefficientsL[4][0]))
 
     # Try to run debugging mode
-    if debuggingMode is True: #Works
+    if debuggingMode is True: 
         print('Starting debugging for camera L')
         print('Attempting to load cam L intrinsics from file...')
         try: 
@@ -1078,11 +1078,11 @@ def getIntrinsicsLeftCamera(capture, paths, singleLGenImages, singleLTestCombina
 
 def getIntrinsicsRightCamera(capture, paths, singleRGenImages, singleRTestCombinations, singleRCalibration, debuggingMode):
     
-    if singleRGenImages is True: #Works
+    if singleRGenImages is True: 
 
         generateImgsSingle(capture, 'R', paths['indCamR'])
 
-    elif singleRTestCombinations is True: #Works
+    elif singleRTestCombinations is True: 
     
         print('Computing best image combination for camera R')
         # Create a dictionary with paths to all images and their respective image points 
@@ -1092,7 +1092,7 @@ def getIntrinsicsRightCamera(capture, paths, singleRGenImages, singleRTestCombin
         lsBestCombination = testAllImgCombinations('Single', dict_pathsPoints, 'R', paths['individual'])
 
 
-    elif singleRCalibration == True: #Works
+    elif singleRCalibration == True: 
 
         # Load list with best combination from file
         try:
@@ -1129,7 +1129,7 @@ def getIntrinsicsRightCamera(capture, paths, singleRGenImages, singleRTestCombin
 
     # Try to run debugging mode
 
-    if debuggingMode is True: #Works
+    if debuggingMode is True: 
         
         print('Attempting to load cam R intrinsics from file...')
         try: 
@@ -1184,7 +1184,6 @@ def calibrateStereoSetup(capL, capR, paths, stereoGenImages, stereoTestCombinati
             newCameraMatrixR = np.load(paths['individual']+'/newCameraMatrixR.npy') 
             distortionCoefficientsR = np.load(paths['individual']+'/distortionCoefficientsR.npy')
 
-        
         except: 
             print('Failed to load best image combination or camera intrinsics. Please restart calibration')
 
@@ -1199,7 +1198,7 @@ def calibrateStereoSetup(capL, capR, paths, stereoGenImages, stereoTestCombinati
         try:
             stereoRotation = np.load(paths['stereo']+'/rotationVector.npy')
             stereoTranslation = np.load(paths['stereo']+'/translationVector.npy')
-            print('Translation from camera R to camera L: x={:.2f}cm, y={:.2f}cm, z={:.2f}cm'.format(stereoTranslation[0][0], stereoTranslation[1][0], stereoTranslation[2][0]))
+            print('Translation from camera R to camera L: x={:.5f}cm, y={:.5f}cm, z={:.5f}cm'.format(stereoTranslation[0][0], stereoTranslation[1][0], stereoTranslation[2][0]))
         except:
             print('Could not load stereo parameters from file. Please recalibrate stereo setup..')
     
@@ -1207,6 +1206,8 @@ def calibrateStereoSetup(capL, capR, paths, stereoGenImages, stereoTestCombinati
     return stereoTranslation
 
 def getRectificationMap(capL, capR, paths, newRectificationMapping, debuggingMode): #works
+
+    leftMapX, leftMapY, rightMapX, rightMapY, rectifiedCameraMatrixL, rectifiedCameraMatrixR, Q = np.zeros(7)
 
     if newRectificationMapping is True:
 
@@ -1247,7 +1248,7 @@ def getRectificationMap(capL, capR, paths, newRectificationMapping, debuggingMod
                 # Compute rectified camera matrices
                 rectifiedCameraMatrixL = proj_mat_l[:,[0, 1, 2]]
                 rectifiedCameraMatrixR = proj_mat_r[:,[0, 1, 2]]
-
+                
                 # Compute rectification maps
                 leftMapX, leftMapY = cv.initUndistortRectifyMap(newCameraMatrixL, distortionCoefficientsL, R_L, proj_mat_l, imgSize, cv.CV_32FC1)
                 rightMapX, rightMapY = cv.initUndistortRectifyMap(newCameraMatrixR, distortionCoefficientsR, R_R, proj_mat_r, imgSize, cv.CV_32FC1)    
@@ -1420,8 +1421,7 @@ def getRectificationMap(capL, capR, paths, newRectificationMapping, debuggingMod
                 # Draw line connecting these chessboard corners
                 cv.line(vis_afterRectification, (x_l,y_l), (x_r+Left_rectified.shape[1],y_r), (0,255,255), 2)
                 disp_x = x_l - x_r
-                depthcamL  = ((-stereoTranslation[0][0])*rectifiedCameraMatrixL[0][0])/(disp_x)
-                disp_x_text = ('Camera L disparity: {}px, depth: {:.2f}cm'.format(disp_x, depthcamL))
+                disp_x_text = ('Camera L disparity: {}px'.format(disp_x))
                 cv.putText(vis_afterRectification, disp_x_text, (x_l + int((x_r+Left_rectified.shape[1]-x_l)/3), y_r -10), font, fontScale, fontcolor, 2, cv.LINE_AA)
 
                 # Draw horizontal (epipolar) lines starting at left frame's y coordinates
@@ -1441,14 +1441,16 @@ def initialiseCorrespondence():
         minDisparity = 192
         maxDisparity = 272
         numDisparities = maxDisparity-minDisparity
-        blockSize = 5
-        #disp12MaxDiff = 5
-        #uniquenessRatio = 15
+        blockSize = 11 # Must be uneven and between 5..255 for stereoBM!
+        uniquenessRatio = 15
 
-        left_matcher = cv.StereoSGBM_create(minDisparity = minDisparity,numDisparities = numDisparities,blockSize = blockSize)
+        # Option 1: StereoSGBM
+        # left_matcher = cv.StereoSGBM_create(minDisparity = minDisparity,numDisparities = numDisparities,blockSize = blockSize)
     
-        # left_matcher = cv.StereoBM_create(numDisparities = numDisparities, blockSize=blockSize)
-        # left_matcher.setMinDisparity(minDisparity)
+        # Option 2: StereoBM
+        left_matcher = cv.StereoBM_create(numDisparities = numDisparities, blockSize=blockSize)
+        left_matcher.setMinDisparity(minDisparity)
+        
         sigma = 1.5
         lmbda = 8000.0
 
@@ -1461,9 +1463,8 @@ def initialiseCorrespondence():
 
 def getDepth(Left_rectified, Right_rectified, Q, left_matcher, right_matcher, wls_filter):
 
-
-    # Left_rectified = cv.cvtColor(Left_rectified,cv.COLOR_BGR2GRAY)
-    # Right_rectified = cv.cvtColor(Right_rectified,cv.COLOR_BGR2GRAY)
+    Left_rectified = cv.cvtColor(Left_rectified,cv.COLOR_BGR2GRAY)
+    Right_rectified = cv.cvtColor(Right_rectified,cv.COLOR_BGR2GRAY)
 
     left_dispBM = left_matcher.compute(Left_rectified, Right_rectified).astype(np.float32) / 16
     right_dispBM = right_matcher.compute(Right_rectified,Left_rectified).astype(np.float32) / 16
@@ -1474,4 +1475,4 @@ def getDepth(Left_rectified, Right_rectified, Q, left_matcher, right_matcher, wl
 
 
 
-    return points_3DBM_filtered, filtered_dispBM
+    return points_3DBM_filtered
