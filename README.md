@@ -1,3 +1,11 @@
+# Background
+This project is a prototype for a computer vision application (Python and openCV) to be used with a two-camera setup installed on a pushback tractor (airport vehicle to push back the aircraft from its parking position). The goal was to analyse the application of object detection and depth computation (computer vision) in a driver assistance system that supports the docking process of a remotely controlled pushback tractor by indicating the distance to the aircraft depending on the tractors position to the operator.
+
+The main challenge of the project was to create a calibration algorithm, which selects the best combination of images, from a range of images taken with each camera, to optimise the camera calibration for each individual camera as well as the stereo setup.
+By doing so, the error of the computed disparity map and the depth map were significantly reduced. 
+The software uses a deep learning model (using transfer learning) to identify aircraft engines.
+
+
 # Setup information
 
 1. Create a new folder
